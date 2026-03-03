@@ -6,8 +6,12 @@ description: >-
   Java, C#, Rust), documentation search, error troubleshooting, sample data access,
   and V3-to-V4 migration. Use when working with entity resolution, record matching,
   record linkage, deduplication, Senzing SDK integration, data mapping for Senzing
-  ingestion, or troubleshooting Senzing error codes.
+  ingestion, or troubleshooting Senzing error codes. Also use when the user
+  mentions matching records across data sources, finding duplicate entities,
+  identity resolution, master data management, or needs to resolve who is who
+  across datasets.
 license: Proprietary
+compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
 metadata:
   author: senzing
   version: "0.13.1"
