@@ -10,7 +10,7 @@ description: >-
 license: Proprietary
 metadata:
   author: senzing
-  version: "0.12.5"
+  version: "0.13.1"
 ---
 
 # Senzing Entity Resolution — MCP Skill
@@ -31,7 +31,7 @@ The Senzing MCP server is a remote server. Connect it to your client:
 
 **Claude Code:**
 ```bash
-claude mcp add --transport http senzing https://mcp.senzing.com/v2
+claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 ```
 
 **Claude Desktop / Other MCP Clients** — add to your MCP config:
@@ -40,7 +40,7 @@ claude mcp add --transport http senzing https://mcp.senzing.com/v2
   "mcpServers": {
     "senzing": {
       "type": "url",
-      "url": "https://mcp.senzing.com/v2"
+      "url": "https://mcp.senzing.com/mcp"
     }
   }
 }
