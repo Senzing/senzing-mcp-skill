@@ -37,8 +37,8 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 
 ## Skill Definition
 
-See [SKILL.md](SKILL.md) for the full skill manifest including tool reference,
-workflows, best practices, and entity resolution glossary.
+See [SKILL.md](senzing-entity-resolution/SKILL.md) for the full skill manifest
+including tool reference, workflows, best practices, and entity resolution glossary.
 
 ## Privacy
 
@@ -48,4 +48,4 @@ scripts run locally on the client.
 
 ## License
 
-Proprietary — see [SKILL.md](SKILL.md) frontmatter.
+Proprietary — see [SKILL.md](senzing-entity-resolution/SKILL.md) frontmatter.
