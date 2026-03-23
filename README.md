@@ -21,11 +21,13 @@ This skill enables AI agents to:
 The skill requires the Senzing MCP server. Add it to your client:
 
 **Claude Code:**
+
 ```bash
 claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 ```
 
 **Claude Desktop / Other MCP Clients** — add to your MCP config:
+
 ```json
 {
   "mcpServers": {
