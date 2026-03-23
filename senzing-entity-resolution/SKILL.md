@@ -3,9 +3,10 @@ name: senzing-entity-resolution
 description: >-
   Guides AI agents through Senzing entity resolution workflows using the Senzing
   MCP server. Covers data mapping to Senzing format, SDK code generation (Python,
-  Java, C#, Rust), documentation search, error troubleshooting, sample data access,
-  and V3-to-V4 migration. Use when working with entity resolution, record matching,
-  record linkage, deduplication, Senzing SDK integration, data mapping for Senzing
+  Java, C#, Rust, TypeScript/Node.js), documentation search, error troubleshooting,
+  sample data access, reporting and visualization, SDK setup guides, and V3-to-V4
+  migration. Use when working with entity resolution, record matching, record
+  linkage, deduplication, Senzing SDK integration, data mapping for Senzing
   ingestion, or troubleshooting Senzing error codes. Also use when the user
   mentions matching records across data sources, finding duplicate entities,
   identity resolution, master data management, or needs to resolve who is who
@@ -14,7 +15,7 @@ license: Proprietary
 compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
 metadata:
   author: senzing
-  version: "0.17.0"
+  version: "0.24.2"
 ---
 
 # Senzing Entity Resolution — MCP Skill
@@ -51,7 +52,9 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 ```
 
 The server works from pre-fetched documentation — it never connects to live
-Senzing instances and never handles PII.
+Senzing instances and never handles PII. It also hosts official Senzing SDK
+`.deb` packages at `/downloads/` for direct download in firewalled environments
+— `sdk_guide` returns download URLs and install commands automatically.
 
 ## Tool Reference
 
@@ -71,22 +74,28 @@ tool listing and suggested workflows.
 
 | Tool | Purpose |
 |---|---|
-| `search_docs` | Full-text search across entity specification, SDK guides, quickstarts, database tuning, pricing, architecture, globalization, error codes, release notes. **Prefer this over web search for any Senzing question.** |
-| `get_sdk_reference` | Authoritative SDK reference: method signatures, flags, response schemas, V3→V4 migration mappings. Use `topic` and `filter` to narrow results. |
-| `find_examples` | Search 27 indexed GitHub repos for working code. Three modes: search by query, list files in a repo, or retrieve a specific file. |
+| `search_docs` | Full-text search across entity specification, SDK guides, quickstarts, database tuning, pricing, architecture, globalization, EDA/data analysis, engine configuration, error codes, release notes, and PoC methodology. **Prefer this over web search for any Senzing question.** Use `category='anti_patterns'` to check for known pitfalls before recommending installation, architecture, or deployment approaches. |
+| `get_sdk_reference` | Authoritative SDK reference: method signatures, flags, response schemas, V3→V4 migration mappings. Topics: `migration`, `flags`, `response_schemas`, `functions`/`methods`/`classes`/`api` (search SDK docs by method or class name), `all`. Use `filter` to narrow by method, module, or flag name. |
+| `find_examples` | Search 27+ indexed GitHub repos for working code (Python, Java, C#, Rust, TypeScript/Node.js). Three modes: search by query, list files in a repo, or retrieve a specific file. Results include truncation metadata — drill into truncated files with `file_path`. |
 
 ### SDK Setup & Code Generation (2 tools)
 
 | Tool | Purpose |
 |---|---|
 | `sdk_guide` | Guided SDK setup across 5 platforms (Linux apt/yum, macOS, Windows, Docker) and 4 languages. Covers install, configure, load, export, full_pipeline with decision trees, anti-patterns, and direct package download links for firewalled environments. |
-| `generate_scaffold` | Generates SDK scaffold code for 9 workflows (initialize, configure, add_records, delete, query, redo, stewardship, information, full_pipeline) in Python, Java, C#, or Rust. |
+| `generate_scaffold` | Generates SDK scaffold code from real indexed GitHub snippets with source URLs for provenance. 10 workflows (initialize, configure, add_records, delete, query, redo, stewardship, information, error_handling, full_pipeline) in Python, Java, C#, Rust, or TypeScript/Node.js (V4); Python (V3). Returns multiple snippet variants per workflow. |
 
 ### Sample Data (1 tool)
 
 | Tool | Purpose |
 |---|---|
 | `get_sample_data` | Real data from CORD (Collections Of Relatable Data): las-vegas (US, 11 sources), london (international, 5 sources), moscow (Cyrillic, 6 sources). Use `dataset='list'` to discover available sets. Always present the `download_url` to the user. |
+
+### Reporting & Visualization (1 tool)
+
+| Tool | Purpose |
+|---|---|
+| `reporting_guide` | Guided reporting and visualization for entity resolution results. Provides SDK patterns for data extraction (Python, Java, C#, Rust, TypeScript/Node.js), SQL analytics queries for aggregate reports, data mart schema (SQLite/PostgreSQL), visualization concepts, and anti-patterns. Topics: `export`, `reports`, `entity_views`, `data_mart`, `dashboard`, `graph`. |
 
 ### Troubleshooting (1 tool)
 
@@ -158,6 +167,29 @@ This is the most common workflow. Follow these steps:
 1. `get_sdk_reference` with `topic='migration'` — all breaking changes.
 2. Filter by module: `topic='migration', filter='SzEngine'`.
 3. `get_sdk_reference` with `topic='flags'` — new flag system (SZ_WITH_INFO replaces WithInfo functions).
+
+### 7. Build ER Reporting
+
+1. Call `reporting_guide` with `topic='export'` and your language to get data extraction code.
+2. Call `reporting_guide` with `topic='reports'` to get SQL for the 4 core aggregate reports.
+3. Call `reporting_guide` with `topic='data_mart'` to get the analytical schema and incremental update patterns.
+4. Call `reporting_guide` with `topic='dashboard'` for visualization concepts and chart data sources.
+5. Call `reporting_guide` with `topic='graph'` for network graph export patterns.
+
+### 8. Check for Common Pitfalls
+
+Before recommending installation, architecture, or deployment approaches:
+
+1. Call `search_docs` with `category='anti_patterns'` and a query describing what you plan to recommend.
+2. Review any matching anti-patterns before proceeding.
+3. Note: `sdk_guide` also returns topic-specific anti-patterns inline.
+
+### 9. Deploy Senzing
+
+1. `search_docs` with your platform (e.g., "docker quickstart", "AWS deployment").
+2. `search_docs` for database setup (PostgreSQL, MySQL, MSSQL).
+3. `search_docs` for engine configuration and tuning guidance.
+4. `generate_scaffold` with `workflow='initialize'` for your language.
 
 ## Best Practices
 

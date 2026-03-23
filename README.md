@@ -9,9 +9,10 @@ This skill enables AI agents to:
 
 - **Map source data** to Senzing entity resolution format (CSV, JSON, etc.)
 - **Set up the Senzing SDK** with guided install across 5 platforms and 4 languages, including direct package downloads for firewalled environments
-- **Generate SDK code** in Python, Java, C#, and Rust
+- **Generate SDK code** in Python, Java, C#, Rust, and TypeScript/Node.js
 - **Search documentation** across SDK guides, entity specification, quickstarts, and more
 - **Troubleshoot errors** with causes and resolution steps for 456 error codes
+- **Build reporting** with SQL analytics, data marts, dashboards, and graph export
 - **Access sample data** from real-world CORD datasets for evaluation
 - **Migrate V3 to V4** with breaking change mappings and flag references
 
