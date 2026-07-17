@@ -1,0 +1,20 @@
+Copyright © Senzing, Inc. All rights reserved.
+
+This Agent Skill (the "Skill") — the contents of this repository, including
+SKILL.md and accompanying documentation — is proprietary to Senzing, Inc. and is
+provided for use with the Senzing MCP server and Senzing products.
+
+You may install and use the Skill with a compatible AI agent for the purpose of
+interacting with Senzing software and services. Except as expressly permitted
+above, you may not redistribute, sublicense, sell, or create derivative works of
+the Skill without the prior written permission of Senzing, Inc.
+
+The Skill and the associated Senzing MCP server are provided "AS IS", without
+warranty of any kind, express or implied, including but not limited to the
+warranties of merchantability, fitness for a particular purpose, accuracy,
+completeness, and noninterference. In no event shall Senzing, Inc. be liable for
+any claim, damages, or other liability arising from, out of, or in connection
+with the Skill or its use.
+
+Use of Senzing software and services is separately governed by the Senzing End
+User License Agreement: https://senzing.com/end-user-license-agreement
