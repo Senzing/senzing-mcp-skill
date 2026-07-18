@@ -30,7 +30,7 @@ jobs:
         id: live
         run: |
           set -euo pipefail
-          V=$(curl -sfL --max-time 30 https://sz-mcp-coworker.fly.dev/.well-known/agent-card.json | jq -r '.version')
+          V=$(curl -sfL --max-time 30 https://mcp.senzing.com/.well-known/agent-card.json | jq -r '.version')
           case "$V" in
             [0-9]*.[0-9]*.[0-9]*) : ;;
             *) echo "::error::unexpected MCP version '$V'"; exit 1 ;;
