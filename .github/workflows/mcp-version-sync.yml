@@ -1,0 +1,74 @@
+name: MCP version sync
+
+# Keeps this skill's version in lockstep with the hosted Senzing MCP server.
+# metadata.version tracks the MCP SERVER version it was validated against.
+# Runs daily; trigger manually right after an MCP release for an immediate sync.
+# Version-only drift is auto-bumped — a tool-surface change still needs manual work
+# (the opened PR says so).
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: mcp-version-sync
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Sync skill version to MCP server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Read live MCP server version
+        id: live
+        run: |
+          set -euo pipefail
+          V=$(curl -sfL --max-time 30 https://sz-mcp-coworker.fly.dev/.well-known/agent-card.json | jq -r '.version')
+          case "$V" in
+            [0-9]*.[0-9]*.[0-9]*) : ;;
+            *) echo "::error::unexpected MCP version '$V'"; exit 1 ;;
+          esac
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "Live MCP server version: $V"
+
+      - name: Read our pinned version
+        id: ours
+        run: |
+          set -euo pipefail
+          CUR=$(grep -m1 -E '^[[:space:]]*version:[[:space:]]*"' senzing-entity-resolution/SKILL.md | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
+          echo "version=$CUR" >> "$GITHUB_OUTPUT"
+          echo "Our version: $CUR"
+
+      - name: Bump on drift
+        id: bump
+        if: steps.live.outputs.version != steps.ours.outputs.version
+        run: |
+          set -euo pipefail
+          NEW="${{ steps.live.outputs.version }}"
+          MONTH=$(date -u +%Y-%m)
+          sed -i -E "s/(^[[:space:]]*version:[[:space:]]*\")[0-9]+\.[0-9]+\.[0-9]+(\")/\1${NEW}\2/" senzing-entity-resolution/SKILL.md
+          sed -i -E "s/Senzing MCP server \*\*v[0-9]+\.[0-9]+\.[0-9]+\*\* \([0-9]{4}-[0-9]{2}\)/Senzing MCP server **v${NEW}** (${MONTH})/g" README.md
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Open sync PR
+        if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          branch: mcp-version-sync/v${{ steps.live.outputs.version }}
+          title: "chore: sync to MCP server v${{ steps.live.outputs.version }}"
+          commit-message: "chore: sync skill version to MCP server v${{ steps.live.outputs.version }}"
+          body: |
+            Automated: the hosted Senzing MCP server is now **v${{ steps.live.outputs.version }}**
+            (this skill was v${{ steps.ours.outputs.version }}). Bumps `SKILL.md` `metadata.version`
+            and the README "Verified against" line.
+
+            **This is a version-only sync.** If this MCP release changed the *tool surface*
+            (a tool added / removed / renamed, or args changed), the skill's tool list and
+            references need manual updates too — review before merging.
