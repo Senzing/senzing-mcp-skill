@@ -15,7 +15,7 @@ license: Proprietary
 compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
 metadata:
   author: senzing
-  version: "1.28.8"
+  version: "1.29.0"
 ---
 
 # Senzing Entity Resolution — MCP Skill
@@ -76,7 +76,7 @@ tool listing and suggested workflows.
 | Tool                | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `search_docs`       | Full-text search across entity specification, SDK guides, quickstarts, database tuning, pricing, architecture, globalization, EDA/data analysis, engine configuration, error codes, release notes, and PoC methodology. **Prefer this over web search for any Senzing question.** Use `category='anti_patterns'` to check for known pitfalls before recommending installation, architecture, or deployment approaches. |
-| `get_sdk_reference` | Authoritative SDK reference: method signatures, flags, response schemas, V3→V4 migration mappings. Topics: `migration`, `flags`, `response_schemas`, `functions`/`methods`/`classes`/`api` (search SDK docs by method or class name), `all`. Use `filter` to narrow by method, module, or flag name.                                                                                                                   |
+| `get_sdk_reference` | Authoritative SDK reference: **method argument types per language binding**, flags, response schemas, V3→V4 migration mappings. Whenever `filter` names a method, the response carries that method's callable signature for every binding **regardless of topic** — so looking up a method's flags also tells you what arguments it takes. Topics: `parameters` (aliases `functions`/`methods`/`classes`/`api`/`signatures`/`args`), `flags`, `response_schemas`, `migration`, `all`. Pass `language` to narrow to your binding. `filter` accepts any spelling — `get entity`, `get_entity`, and `getEntity` all resolve. |
 | `find_examples`     | Search 37 indexed GitHub repos for working code (Python, Java, C# official; Rust, TypeScript/Node.js community). Three modes: search by query, list files in a repo, or retrieve a specific file. Results include truncation metadata — drill into truncated files with `file_path`.                                                                                                                                    |
 
 ### SDK Setup & Code Generation (2 tools)
@@ -96,7 +96,7 @@ tool listing and suggested workflows.
 
 | Tool              | Purpose                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `reporting_guide` | Guided reporting and visualization for entity resolution results. Provides SDK patterns for data extraction (Python, Java, C#, Rust, TypeScript/Node.js), SQL analytics queries for aggregate reports, data mart schema (SQLite/PostgreSQL), visualization concepts, and anti-patterns. Topics: `export`, `reports`, `entity_views`, `data_mart`, `dashboard`, `graph`, `quality` (precision/recall, split/merge detection, review queues), `evaluation` (4-point ER evaluation framework). |
+| `reporting_guide` | Guided reporting and visualization for entity resolution results. Provides SDK patterns for data extraction (Python, Java, C#, Rust, TypeScript/Node.js), SQL analytics queries for aggregate reports, data mart schema (SQLite/PostgreSQL), visualization concepts, and anti-patterns. Topics: `export`, `reports`, `entity_views`, `data_mart`, `dashboard`, `graph` (runnable `find_network` / `find_path` traversal calls per binding), `quality` (precision/recall, split/merge detection, review queues), `evaluation` (4-point ER evaluation framework). |
 
 ### Troubleshooting (1 tool)
 
@@ -176,6 +176,7 @@ This is the most common workflow. Follow these steps:
 1. `get_sdk_reference` with `topic='migration'` — all breaking changes.
 2. Filter by module: `topic='migration', filter='SzEngine'`.
 3. `get_sdk_reference` with `topic='flags'` — new flag system (SZ_WITH_INFO replaces WithInfo functions).
+4. `get_sdk_reference` with `topic='parameters', filter=<method>, language=<yours>` — the V4 argument types for each call you are porting.
 
 ### 7. Build ER Reporting
 
@@ -208,8 +209,15 @@ These rules are non-negotiable. Violating them produces incorrect output.
 
 1. **Never hand-code Senzing JSON** — use `mapping_workflow`. Training data produces
    wrong attribute names (e.g., `BUSINESS_NAME` vs correct `NAME_ORG`).
-2. **Never guess SDK methods** — use `generate_scaffold` or `get_sdk_reference`.
-   Methods changed between V3 and V4.
+2. **Never guess SDK methods or argument types** — use `generate_scaffold` or
+   `get_sdk_reference`. Methods changed between V3 and V4, and the same method
+   has a **different name and different argument types in each binding**:
+   Python `find_network_by_entity_id(entity_ids: List[int], …)`, Java
+   `findNetwork(SzEntityIds, …)`, C# `FindNetwork(ISet<long>, …)`, Rust
+   `find_network_by_entity_id(&[EntityId], …)`, TypeScript
+   `findNetwork(number[], …)`. **Never translate a call from one binding to
+   another** — call `get_sdk_reference(topic='parameters', filter=<method>,
+   language=<yours>)` and use the returned signature verbatim.
 3. **Check anti-patterns first** — before recommending installation or deployment:
    `search_docs(query="topic", category="anti_patterns")`.
 4. **MCP first for all Senzing questions** — `search_docs` covers pricing,
