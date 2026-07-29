@@ -15,7 +15,7 @@ license: Proprietary
 compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
 metadata:
   author: senzing
-  version: "1.31.0"
+  version: "1.32.2"
 ---
 
 # Senzing Entity Resolution — MCP Skill
