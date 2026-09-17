@@ -14,7 +14,7 @@ This skill enables AI agents to:
 - **Set up the Senzing SDK** with guided install across 5 platforms and 5 languages, including direct package downloads for firewalled environments
 - **Generate SDK code** in Python, Java, C#, Rust, and TypeScript/Node.js
 - **Search documentation** across SDK guides, entity specification, quickstarts, and more
-- **Troubleshoot errors** with causes and resolution steps for 456 error codes
+- **Troubleshoot errors** with causes and resolution steps for 459 error codes
 - **Build reporting** with SQL analytics, data marts, dashboards, graph export, and ER quality/evaluation metrics
 - **Access sample data** from real-world CORD datasets and the Senzing truthset
 - **Migrate V3 to V4** with breaking change mappings and flag references
@@ -48,7 +48,7 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 See [SKILL.md](senzing-entity-resolution/SKILL.md) for the full skill manifest
 including tool reference, workflows, best practices, and entity resolution glossary.
 
-Verified against Senzing MCP server **v1.36.1** (2026-09). The skill's
+Verified against Senzing MCP server **v1.37.0** (2026-09). The skill's
 `version` field tracks the server version it was validated against.
 
 ## Privacy
