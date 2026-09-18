@@ -102,7 +102,7 @@ tool listing and suggested workflows.
 
 | Tool                 | Purpose                                                                                                                 |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `explain_error_code` | Explains any of 456 Senzing error codes with causes and resolution steps. Accepts SENZ0005, SENZ-0005, 0005, or just 5. |
+| `explain_error_code` | Explains any of 450+ Senzing error codes with causes and resolution steps. Accepts SENZ0005, SENZ-0005, 0005, or just 5. |
 
 ### Meta & Utility (2 tools)
 
