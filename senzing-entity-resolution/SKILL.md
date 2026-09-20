@@ -15,7 +15,7 @@ license: Proprietary
 compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
 metadata:
   author: senzing
-  version: "1.37.4"
+  version: "1.37.5"
 ---
 
 # Senzing Entity Resolution — MCP Skill
@@ -67,7 +67,7 @@ tool listing and suggested workflows.
 
 | Tool                | Purpose                                                                                                                                                                                                                                     |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `mapping_workflow`  | Interactive 8-step workflow. Steps 1–4 (core): profile source data → plan entities → map fields → generate & validate. Steps 5–8 (optional): sandbox load into a fresh SQLite DB to catch mapping issues. State is client-side — always pass state back. Requires `workspace_dir` (a writable directory) in `data` on `action='start'`. |
+| `mapping_workflow`  | Interactive 8-step workflow. Works with no readable source file: `file_paths` is a label, never opened by the server. Steps 1–4 (core): profile source data → plan entities → map fields → generate & validate. Steps 5–8 (optional): sandbox load into a fresh SQLite DB to catch mapping issues. State is client-side — always pass state back. Requires `workspace_dir` (a writable directory) in `data` on `action='start'`. |
 | `analyze_record`    | Returns a Python analyzer script that examines feature distribution, attribute coverage, and data quality, and validates records against the Entity Specification — all locally. No source data is sent. Requires `workspace_dir`.            |
 | `download_resource` | Fallback for fetching workflow resources (analyzer, entity spec, mapping examples) when network restrictions block direct download. Batch-capable: pass `filenames` (array) for multiple resources or `filename` (string) for one.           |
 
@@ -118,8 +118,15 @@ tool listing and suggested workflows.
 This is the most common workflow. Follow these steps:
 
 1. Call `mapping_workflow` with `action='start'`, the source file paths, and a
-   writable `workspace_dir` in the `data` object.
+   writable `workspace_dir` in the `data` object. **A readable file is not
+   required.** `file_paths` is a label the server records — it never opens the
+   file — so if the user has only described their columns, start anyway using
+   whatever name they used. Never hand-code a mapping because you cannot read
+   the file.
 2. Walk through steps 1–4 (core): Profile → Plan → Map → Generate & Validate.
+   At step 1 you may run the profiler script, read the data yourself, **or**
+   write the `profile_summary` from the user's own description of their columns
+   when there is no readable file and no shell.
 3. At each step, pass the `state` object from the previous response.
 4. Use `analyze_record` to check feature distribution, coverage, and Entity
    Specification compliance on the output JSON.
