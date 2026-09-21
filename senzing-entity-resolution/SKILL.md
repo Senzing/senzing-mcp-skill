@@ -15,7 +15,7 @@ license: Proprietary
 compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
 metadata:
   author: senzing
-  version: "1.37.5"
+  version: "1.37.6"
 ---
 
 # Senzing Entity Resolution — MCP Skill
@@ -69,7 +69,7 @@ tool listing and suggested workflows.
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mapping_workflow`  | Interactive 8-step workflow. Works with no readable source file: `file_paths` is a label, never opened by the server. Steps 1–4 (core): profile source data → plan entities → map fields → generate & validate. Steps 5–8 (optional): sandbox load into a fresh SQLite DB to catch mapping issues. State is client-side — always pass state back. Requires `workspace_dir` (a writable directory) in `data` on `action='start'`. |
 | `analyze_record`    | Returns a Python analyzer script that examines feature distribution, attribute coverage, and data quality, and validates records against the Entity Specification — all locally. No source data is sent. Requires `workspace_dir`.            |
-| `download_resource` | Fallback for fetching workflow resources (analyzer, entity spec, mapping examples) when network restrictions block direct download. Batch-capable: pass `filenames` (array) for multiple resources or `filename` (string) for one.           |
+| `download_resource` | Fallback for fetching workflow resources (analyzer, entity spec, mapping examples) when network restrictions block direct download. Batch-capable: pass `filenames` (array) for multiple resources or `filename` (string) for one. A large file comes back in chunks of at most 48,000 characters carrying `truncated`, `next_offset` and `total_chars` — pass `offset=<next_offset>` to continue; for `.md` reference documents `search_docs` is the cheaper route, and a batch member too large for one chunk is listed under `oversize` (request it alone). |
 
 ### Documentation & Reference (3 tools)
 
