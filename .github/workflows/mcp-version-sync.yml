@@ -59,8 +59,13 @@ jobs:
 
       - name: Open sync PR
         if: steps.bump.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
+          # main requires signed commits; an unsigned bot commit blocks the merge
+          # for the whole PR, which is why every sync here has needed --admin
+          # (#30, #31). Signed via the GitHub API as github-actions[bot].
+          # sign-commits landed in v8, so the pin has to move with it.
+          sign-commits: true
           branch: mcp-version-sync/v${{ steps.live.outputs.version }}
           title: "chore: sync to MCP server v${{ steps.live.outputs.version }}"
           commit-message: "chore: sync skill version to MCP server v${{ steps.live.outputs.version }}"
