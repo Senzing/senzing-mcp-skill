@@ -162,6 +162,12 @@ This is the most common workflow. Follow these steps:
    - Use `workflow='full_pipeline'` for an end-to-end example.
 2. Call `find_examples` to find real-world usage patterns.
 3. Use `search_docs` for API details and deployment guidance.
+4. **Search flags:** do not use the default flags for search — pass the minimal set the
+   caller needs (`get_sdk_reference(topic='flags')`). The default
+   (`SZ_SEARCH_BY_ATTRIBUTES_DEFAULT_FLAGS` = `..._ALL`) includes
+   `SZ_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES`, which is expensive on large entities
+   (36.7 s vs 1.7 s for `SZ_ENTITY_INCLUDE_ALL_FEATURES` on one 382-entity search);
+   fetch features only for the few entities that matter.
 
 ### 4. Troubleshoot Errors
 
