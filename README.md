@@ -1,7 +1,7 @@
 # Senzing Entity Resolution — Agent Skill
 
 An **Agent Skill** that teaches AI agents how to use the
-[Senzing](https://senzing.com) MCP server for entity resolution workflows. It is
+[Senzing®](https://senzing.com) MCP server for entity resolution workflows. It is
 a portable, client-agnostic skill — usable from any skill-compatible agent or
 marketplace (e.g. [skillsmp.com](https://skillsmp.com),
 [agentskills.io](https://agentskills.io)).
