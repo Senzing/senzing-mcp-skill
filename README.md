@@ -1,8 +1,33 @@
-# Senzing Entity Resolution — Agent Skill
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/senzing-logo-dark-theme.png">
+    <img src="assets/senzing-logo-light-theme.png" alt="Senzing" width="240">
+  </picture>
+</p>
 
-An **Agent Skill** that teaches AI agents how to use the
-[Senzing®](https://senzing.com) MCP server for entity resolution workflows. It is
-a portable, client-agnostic skill — usable from any skill-compatible agent or
+<h1 align="center">Senzing Entity Resolution — Agent Skill</h1>
+
+<p align="center">
+  <b>An Agent Skill that teaches AI agents how to use the <a href="https://senzing.com">Senzing®</a> MCP server for entity resolution workflows.</b>
+</p>
+
+<p align="center">
+  <a href="https://registry.modelcontextprotocol.io/v0/servers/com.senzing%2Fmcp/versions/latest"><img src="https://img.shields.io/badge/MCP_Registry-com.senzing%2Fmcp-F57826?logo=modelcontextprotocol&logoColor=white&style=flat-square&labelColor=0F0D0C" alt="MCP Registry: com.senzing/mcp"></a>
+  <img src="https://img.shields.io/badge/Agent_Skill-SKILL.md-F57826?style=flat-square&labelColor=0F0D0C" alt="Agent Skill: SKILL.md">
+  <img src="https://img.shields.io/badge/Requires-Senzing_MCP_server-F57826?style=flat-square&labelColor=0F0D0C" alt="Requires: Senzing MCP server">
+</p>
+
+<p align="center">
+  <a href="#what-it-does">What it does</a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#skill-definition">Skill definition</a> ·
+  <a href="#privacy">Privacy</a> ·
+  <a href="#license">License</a>
+</p>
+
+<img src="assets/ember-rule.svg" alt="" width="100%" height="4">
+
+It is a portable, client-agnostic skill — usable from any skill-compatible agent or
 marketplace (e.g. [skillsmp.com](https://skillsmp.com),
 [agentskills.io](https://agentskills.io)).
 
