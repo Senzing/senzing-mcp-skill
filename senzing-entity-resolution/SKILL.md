@@ -280,7 +280,7 @@ When discussing Senzing with users, these terms are important:
 - **Matched** — Records confirmed as the same entity.
 - **Possible Match** — Records that might be the same entity but need review.
 - **Relationship** — A declared or discovered connection between entities.
-- **DSR (Data Source Record)** — Senzing's subscription pricing unit: one record
+- **DSR (Data Source Record)** — the Senzing subscription pricing unit: one record
   mapped and loaded into Senzing, keyed by DATA_SOURCE code + RECORD_ID. Updates
   and searches are not counted; deletes generally reduce the count.
 
