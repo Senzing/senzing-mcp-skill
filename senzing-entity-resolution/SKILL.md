@@ -18,16 +18,16 @@ metadata:
   version: "1.41.0"
 ---
 
-# Senzing Entity Resolution — MCP Skill
+# Senzing entity resolution — MCP skill
 
 Use this skill whenever a task involves entity resolution, record linkage,
-deduplication, or any interaction with the Senzing platform.
+deduplication or any interaction with the SENZING® SDK.
 
-## What Is Senzing
+## What the Senzing SDK is
 
-Senzing provides real-time AI-powered entity resolution as an embeddable SDK.
+Senzing software provides real time AI powered entity resolution as an embeddable SDK.
 It determines when two records refer to the same real-world entity (person,
-organization, etc.) by analyzing names, addresses, identifiers, and other
+organization, etc.) by analyzing names, addresses, identifiers and other
 attributes across data sources — without training data or manual rules.
 
 ## MCP Server Setup
@@ -58,12 +58,12 @@ Senzing instances and never handles PII. It also hosts official Senzing SDK
 `.deb` packages at `/downloads/` for direct download in firewalled environments
 — `sdk_guide` returns download URLs and install commands automatically.
 
-## Tool Reference
+## Tool reference
 
 Start any Senzing session by calling `get_capabilities` for an up-to-date
 tool listing and suggested workflows.
 
-### Data Mapping (3 tools)
+### Data mapping (3 tools)
 
 | Tool                | Purpose                                                                                                                                                                                                                                     |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -71,7 +71,7 @@ tool listing and suggested workflows.
 | `analyze_record`    | Returns a Python analyzer script that examines feature distribution, attribute coverage, and data quality, and validates records against the Entity Specification — all locally. No source data is sent. Requires `workspace_dir`.            |
 | `download_resource` | Fallback for fetching workflow resources (analyzer, entity spec, mapping examples) when network restrictions block direct download. Batch-capable: pass `filenames` (array) for multiple resources or `filename` (string) for one. A large file comes back in chunks of at most 48,000 characters carrying `truncated`, `next_offset` and `total_chars` — pass `offset=<next_offset>` to continue; for `.md` reference documents `search_docs` is the cheaper route, and a batch member too large for one chunk is listed under `oversize` (request it alone). |
 
-### Documentation & Reference (3 tools)
+### Documentation & reference (3 tools)
 
 | Tool                | Purpose                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -79,20 +79,20 @@ tool listing and suggested workflows.
 | `get_sdk_reference` | Authoritative SDK reference: **method argument types per language binding**, flags, response schemas, V3→V4 migration mappings. Whenever `filter` names a method, the response carries that method's callable signature for every binding **regardless of topic** — so looking up a method's flags also tells you what arguments it takes. Topics: `parameters` (aliases `functions`/`methods`/`classes`/`api`/`signatures`/`args`), `flags`, `response_schemas`, `migration`, `all`. Pass `language` to narrow to your binding. `filter` accepts any spelling — `get entity`, `get_entity`, and `getEntity` all resolve. `topic='flags'` with an exact method `filter` returns a compact one-line-per-flag view; use `flag_details` (or a single-flag `filter`) for full definitions. |
 | `find_examples`     | Search 37 indexed GitHub repos for working code (Python, Java, C# official; Rust, TypeScript/Node.js community). Three modes: search by query, list files in a repo, or retrieve a specific file. Results include truncation metadata — drill into truncated files with `file_path`.                                                                                                                                    |
 
-### SDK Setup & Code Generation (2 tools)
+### SDK setup & code generation (2 tools)
 
 | Tool                | Purpose                                                                                                                                                                                                                                                                                                                                            |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sdk_guide`         | Guided SDK setup across 5 platforms (linux_apt, linux_yum, macos_arm, windows, docker) and 5 languages (Python, Java, C# official; Rust, TypeScript/Node.js community). Topics: install, configure, load, export, redo, initialize, search, stewardship, delete, information, error_handling, full_pipeline — with decision trees, anti-patterns, and direct `.deb` download links for firewalled environments. For load/search/redo, pass `record_count` to select production-threaded vs single-threaded templates. Optional `environment` (`snowflake`, `aws_lambda`, `azure_functions`, `kafka`, `spark`, or an alias such as `lambda`/`spcs`/`databricks`): pass it when the user says they run on one of these; the response's FIRST field is then `environment_note` — relay its rules to the user and run its `search_docs` query before writing code or SQL. Unknown value → `is_error` listing the valid ones. |
 | `generate_scaffold` | Generates SDK scaffold code from real indexed GitHub snippets with source URLs for provenance. 10 workflows (initialize, configure, add_records, delete, query, redo, stewardship, information, error_handling, full_pipeline) in Python, Java, C#, Rust, or TypeScript/Node.js (V4); Python (V3). Returns multiple snippet variants per workflow. |
 
-### Sample Data (1 tool)
+### Sample data (1 tool)
 
 | Tool              | Purpose                                                                                                                                                                                                                                           |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `get_sample_data` | Real test data. Three CORD (Collections Of Relatable Data) sets — las-vegas (US, 11 sources), london (international, 5 sources), moscow (Cyrillic, 6 sources) — plus truthset (the Senzing demo truth set: CUSTOMERS, REFERENCE, WATCHLIST — small, pre-mapped, used in quickstarts). Use `dataset='list'` to discover sets and `source='list'` to list sources within one. Always present the `download_url` to the user. |
 
-### Reporting & Visualization (1 tool)
+### Reporting & visualization (1 tool)
 
 | Tool              | Purpose                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -104,20 +104,20 @@ tool listing and suggested workflows.
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `explain_error_code` | Explains any of 450+ Senzing error codes with causes and resolution steps. Accepts SENZ0005, SENZ-0005, 0005, or just 5. |
 
-### Meta & Utility (2 tools)
+### Meta & utility (2 tools)
 
 | Tool               | Purpose                                                                                                                                                                            |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `get_capabilities` | Server version, capabilities overview, available tools, suggested workflows, and getting started guidance. **Call this first in any Senzing session.**                             |
 | `submit_feedback`  | Two purposes: (1) request a free Senzing evaluation license — set `category='license_request'` with `firstname`, work `email` (personal domains rejected), and optionally `lastname`/`how_heard`; a 10-day, 250K-record eval license is emailed. (2) Submit feedback (`category` = bug/feature/question/general). **Always preview the exact message with the user and get explicit confirmation before sending.** Never include PII unless the user approves. |
 
-## Key Workflows
+## Key workflows
 
-### 1. Map Source Data to Senzing Format
+### 1. Map source data to Senzing format
 
 This is the most common workflow. Follow these steps:
 
-1. Call `mapping_workflow` with `action='start'`, the source file paths, and a
+1. Call `mapping_workflow` with `action='start'`, the source file paths and a
    writable `workspace_dir`. **A readable file is not
    required.** `file_paths` is a label the server records — it never opens the
    file — so if the user has only described their columns, start anyway using
@@ -148,7 +148,7 @@ This is the most common workflow. Follow these steps:
 - Generate & Validate step: emit sample JSON, analyze it, then write and run the
   mapper before rendering a verdict.
 
-### 2. Set Up the Senzing SDK
+### 2. Set up the Senzing SDK
 
 1. Call `sdk_guide` with `topic='install'` — it returns a platform decision tree.
 2. Call again with the chosen platform (e.g., `topic='install', platform='linux_apt'`).
@@ -158,7 +158,7 @@ This is the most common workflow. Follow these steps:
 4. Call `sdk_guide` with `topic='load'` for record loading code.
 5. Or use `topic='full_pipeline'` for install + configure + load + export in one call.
 
-### 3. Generate SDK Integration Code
+### 3. Generate SDK integration code
 
 1. Call `generate_scaffold` with the target language and workflow.
    - Start with `workflow='initialize'` for engine setup.
@@ -173,13 +173,13 @@ This is the most common workflow. Follow these steps:
    (36.7 s vs 1.7 s for `SZ_ENTITY_INCLUDE_ALL_FEATURES` on one 382-entity search);
    fetch features only for the few entities that matter.
 
-### 4. Troubleshoot Errors
+### 4. Troubleshoot errors
 
 1. Call `explain_error_code` with the code from the user's logs.
 2. Follow the resolution steps in the response.
 3. Call `search_docs` for additional context on the error class.
 
-### 5. Evaluate Senzing
+### 5. Evaluate the Senzing SDK
 
 1. `search_docs` — learn about architecture (embedded SDK, air-gapped deployment).
 2. `search_docs` with query "pricing" — DSR pricing model.
@@ -188,46 +188,46 @@ This is the most common workflow. Follow these steps:
 5. `submit_feedback` with `category='license_request'` — request a free 10-day,
    250K-record evaluation license (preview details with the user first).
 
-### 6. Migrate V3 to V4
+### 6. Migrate v3 to v4
 
 1. `get_sdk_reference` with `topic='migration'` — all breaking changes.
 2. Filter by module: `topic='migration', filter='SzEngine'`.
 3. `get_sdk_reference` with `topic='flags'` — new flag system (SZ_WITH_INFO replaces WithInfo functions).
-4. `get_sdk_reference` with `topic='parameters', filter=<method>, language=<yours>` — the V4 argument types for each call you are porting.
+4. `get_sdk_reference` with `topic='parameters', filter=<method>, language=<yours>` — the v4 argument types for each call you are porting.
 
-### 7. Build ER Reporting
+### 7. Build entity resolution (ER) reporting
 
 1. Call `reporting_guide` with `topic='export'` and your language to get data extraction code.
 2. Call `reporting_guide` with `topic='reports'` to get SQL for the 4 core aggregate reports.
 3. Call `reporting_guide` with `topic='data_mart'` to get the analytical schema and incremental update patterns.
 4. Call `reporting_guide` with `topic='dashboard'` for visualization concepts and chart data sources.
 5. Call `reporting_guide` with `topic='graph'` for network graph export patterns.
-6. Call `reporting_guide` with `topic='quality'` for precision/recall, split/merge detection, and review queue strategies.
+6. Call `reporting_guide` with `topic='quality'` for precision/recall, split/merge detection and review queue strategies.
 7. Call `reporting_guide` with `topic='evaluation'` for the 4-point ER evaluation framework with evidence requirements.
 
-### 8. Check for Common Pitfalls
+### 8. Check for common pitfalls
 
-Before recommending installation, architecture, or deployment approaches:
+Before recommending installation, architecture or deployment approaches:
 
 1. Call `search_docs` with `category='anti_patterns'` and a query describing what you plan to recommend.
 2. Review any matching anti-patterns before proceeding.
 3. Note: `sdk_guide` also returns topic-specific anti-patterns inline.
 
-### 9. Deploy Senzing
+### 9. Deploy the Senzing SDK
 
 1. `search_docs` with your platform (e.g., "docker quickstart", "AWS deployment").
 2. `search_docs` for database setup (PostgreSQL, MySQL, MSSQL).
 3. `search_docs` for engine configuration and tuning guidance.
 4. `generate_scaffold` with `workflow='initialize'` for your language.
 
-## Critical Rules
+## Critical rules
 
 These rules are non-negotiable. Violating them produces incorrect output.
 
 1. **Never hand-code Senzing JSON** — use `mapping_workflow`. Training data produces
    wrong attribute names (e.g., `BUSINESS_NAME` vs correct `NAME_ORG`).
 2. **Never guess SDK methods or argument types** — use `generate_scaffold` or
-   `get_sdk_reference`. Methods changed between V3 and V4, and the same method
+   `get_sdk_reference`. Methods changed between v3 and v4, and the same method
    has a **different name and different argument types in each binding**:
    Python `find_network_by_entity_id(entity_ids: List[int], …)`, Java
    `findNetwork(SzEntityIds, …)`, C# `FindNetwork(ISet<long>, …)`, Rust
@@ -238,12 +238,12 @@ These rules are non-negotiable. Violating them produces incorrect output.
 3. **Check anti-patterns first** — before recommending installation or deployment:
    `search_docs(query="topic", category="anti_patterns")`.
 4. **MCP first for all Senzing questions** — `search_docs` covers pricing,
-   architecture, deployment, SDK, database tuning, globalization, and more.
+   architecture, deployment, SDK, database tuning, globalization and more.
    It reflects current releases — prefer it over training knowledge.
 5. **Discover tools dynamically** — call `get_capabilities` rather than assuming
    tool names from this file or training data.
 
-## Best Practices
+## Best practices
 
 - **Always call `get_capabilities` first** to get current tool count and workflows.
 - **Prefer `search_docs` over web search** for any Senzing-related question.
@@ -256,32 +256,32 @@ These rules are non-negotiable. Violating them produces incorrect output.
 - **Present `download_url`** from `get_sample_data` results directly to the user.
   Do not dump raw CORD records into the conversation — they are a preview only.
 - **Version parameter:** All tools accept `version` and default to `"current"`
-  (latest V4). Most tools return current/V4 content regardless of the token
-  passed — for legacy V3 work, rely on `generate_scaffold` (Python V3 is a
+  (latest v4). Most tools return current/v4 content regardless of the token
+  passed — for legacy v3 work, rely on `generate_scaffold` (Python v3 is a
   distinct variant) and `get_sdk_reference(topic='migration')`.
 
-## Entity Resolution Concepts
+## Entity resolution concepts
 
-When discussing Senzing with users, these terms are important:
+When discussing the Senzing SDK with users, these terms are important:
 
-- **Entity** — A real-world person, organization, or object represented by one
+- **Entity** — A real-world person, organization or object represented by one
   or more records across data sources.
 - **Feature** — A category of matchable identity data: NAME, ADDRESS, PHONE,
-  DOB, SSN, PASSPORT, etc. Senzing supports 30+ features.
+  DOB, SSN, PASSPORT, etc. The Senzing SDK supports 30+ features.
 - **Attribute** — A specific mappable field within a feature (e.g., NAME_ORG and
   NAME_FULL under NAME; ADDR_LINE1 under ADDRESS). 100+ attributes across the
   30+ features.
-- **Data Source** — A labeled origin for records (e.g., "CUSTOMERS", "WATCHLIST").
+- **Data source** — A labeled origin for records (e.g., "CUSTOMERS", "WATCHLIST").
   Every record must have a DATA_SOURCE and RECORD_ID.
 - **RECORD_TYPE** — Optional (Recommended) feature that prevents records of
   different types from resolving together. Standard values: PERSON, ORGANIZATION
   (watchlists also commonly use VESSEL, AIRCRAFT). Include when known; leave
   blank if unknown — there is no default.
 - **Matched** — Records confirmed as the same entity.
-- **Possible Match** — Records that might be the same entity but need review.
+- **Possible match** — Records that might be the same entity but need review.
 - **Relationship** — A declared or discovered connection between entities.
 - **DSR (Data Source Record)** — the Senzing subscription pricing unit: one record
-  mapped and loaded into Senzing, keyed by DATA_SOURCE code + RECORD_ID. Updates
+  mapped and loaded into the Senzing SDK, keyed by DATA_SOURCE code + RECORD_ID. Updates
   and searches are not counted; deletes generally reduce the count.
 
 ## Examples
@@ -296,7 +296,7 @@ User: "I have a customer CSV at /data/customers.csv I need to load into Senzing"
 → Optionally continue steps 5–8 to sandbox-load into SQLite and validate the mapping
 ```
 
-### Example 2: Set up Senzing SDK on Linux
+### Example 2: Set up the Senzing SDK on Linux
 
 ```
 User: "Help me install and set up the Senzing SDK on Ubuntu"
