@@ -5,10 +5,10 @@
   </picture>
 </p>
 
-<h1 align="center">Senzing Entity Resolution — Agent Skill</h1>
+<h1 align="center">Senzing entity resolution — agent skill</h1>
 
 <p align="center">
-  <b>An Agent Skill that teaches AI agents how to use the <a href="https://senzing.com">Senzing®</a> MCP server for entity resolution workflows.</b>
+  <b>An Agent Skill that teaches AI agents how to use the <a href="https://senzing.com">SENZING® MCP server</a> for entity resolution workflows.</b>
 </p>
 
 <p align="center">
@@ -31,16 +31,16 @@ It is a portable, client-agnostic skill — usable from any skill-compatible age
 marketplace (e.g. [skillsmp.com](https://skillsmp.com),
 [agentskills.io](https://agentskills.io)).
 
-## What It Does
+## What it does
 
 This skill enables AI agents to:
 
 - **Map source data** to Senzing entity resolution format (CSV, JSON, etc.)
 - **Set up the Senzing SDK** with guided install across 5 platforms and 5 languages, including direct package downloads for firewalled environments
-- **Generate SDK code** in Python, Java, C#, Rust, and TypeScript/Node.js
+- **Generate SDK code** in Python, Java, C#, Rust and TypeScript/Node.js
 - **Search documentation** across SDK guides, entity specification, quickstarts, and more
 - **Troubleshoot errors** with causes and resolution steps for 450+ error codes
-- **Build reporting** with SQL analytics, data marts, dashboards, graph export, and ER quality/evaluation metrics
+- **Build reporting** with SQL analytics, data marts, dashboards, graph export and entity resolution quality/evaluation metrics
 - **Access sample data** from real-world CORD datasets and the Senzing truthset
 - **Migrate V3 to V4** with breaking change mappings and flag references
 - **Request an evaluation license** — a free 10-day, 250K-record trial
@@ -55,7 +55,7 @@ The skill requires the Senzing MCP server. Add it to your client:
 claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 ```
 
-**Claude Desktop / Other MCP Clients** — add to your MCP config:
+**Claude Desktop / other MCP clients** — add to your MCP config:
 
 ```json
 {
@@ -68,7 +68,7 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 }
 ```
 
-## Skill Definition
+## Skill definition
 
 See [SKILL.md](senzing-entity-resolution/SKILL.md) for the full skill manifest
 including tool reference, workflows, best practices, and entity resolution glossary.
