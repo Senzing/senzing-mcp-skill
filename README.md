@@ -73,7 +73,7 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 See [SKILL.md](senzing-entity-resolution/SKILL.md) for the full skill manifest
 including tool reference, workflows, best practices, and entity resolution glossary.
 
-Verified against Senzing MCP server **v1.42.5** (2026-10). The skill's
+Verified against Senzing MCP server **v1.42.6** (2026-11). The skill's
 `version` field tracks the server version it was validated against.
 
 ## Privacy
