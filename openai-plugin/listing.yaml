@@ -23,64 +23,85 @@ mcp:
   type: streamable-http
   url: https://mcp.senzing.com/mcp
 
+# Listing text is adapted from the Claude plugin listing
+# (Senzing/senzing-claude-plugins: plugins/senzing/.claude-plugin/plugin.json
+# and plugins/senzing/README.md), reworded for ChatGPT and Codex.
 manifest:
   name: senzing
   description: >-
-    Senzing entity resolution guidance for ChatGPT and Codex: data mapping,
-    SDK code, documentation search, error explanations and sample data from the
-    hosted Senzing MCP server.
+    Entity resolution: point Codex at your data, it does the work and you have
+    results today.
   author:
     name: Senzing, Inc.
     email: support@senzing.com
     url: https://senzing.com
-  homepage: https://mcp.senzing.com
+  homepage: https://github.com/Senzing/senzing-mcp-skill
   repository: https://github.com/Senzing/senzing-mcp-skill
   license: Proprietary
   keywords:
     - senzing
     - entity-resolution
     - record-linkage
-    - deduplication
     - identity-resolution
-    - data-mapping
+    - deduplication
+    - fuzzy-matching
+    - data-matching
+    - data-quality
     - master-data-management
     - kyc
+    - kyb
+    - fraud-detection
+    - sanctions-screening
+    - customer-360
 
 interface:
   displayName: Senzing
-  shortDescription: Build entity resolution apps
+  shortDescription: Entity resolution
   longDescription: |-
-    Bring SENZING® entity resolution expertise into ChatGPT and Codex. This plugin connects to the hosted Senzing Model Context Protocol (MCP) server and adds a skill that guides each workflow with authoritative, current Senzing documentation instead of guesswork.
+    Entity resolution: point Codex at your data, it does the work and you have results today.
 
-    What it helps with:
-    - Map source data (CSV, JSON or database tables) to the Senzing Entity Specification
-    - Generate Senzing SDK code in Python, Java, C#, Rust and TypeScript from real, indexed examples with source links
-    - Search Senzing documentation and find working code examples
-    - Explain Senzing error codes with causes and resolution steps
-    - Guide Senzing SDK installation, including direct package downloads for firewalled environments
-    - Provide sample data for trying entity resolution
-    - Migrate Senzing SDK v3 code to v4
+    SENZING® entity resolution finds, deduplicates, links and resolves person and organization records within and across data sources, building an identity-resolved graph with no training or tuning. The Senzing SDK is used for master data management (MDM), customer 360, fraud detection, compliance/know your customer (KYC), sanctions and exclusion screening, supply chain/know your business (KYB) and identity intelligence.
 
-    Who it is for: developers and data engineers building deduplication, record linkage, know your customer (KYC), fraud detection or customer 360 applications with the Senzing SDK.
+    How it works: three actors, and only one of them sees your data.
+    - The Senzing MCP server (mcp.senzing.com) supplies the knowledge: entity specification, SDK signatures, official install and mapping procedures, error catalog. It sees the questions the assistant asks it, never your records.
+    - ChatGPT or Codex does the work: it writes Senzing SDK code from that grounding and, in Codex, runs it.
+    - Your Senzing SDK resolves the records, on your machine.
 
-    Limitations: the plugin provides guidance, code and documentation. It does not resolve records itself; entity resolution runs in the Senzing SDK installed in your own environment. The mapping workflow sends field names and schema to the server, not your records. Do not send personally identifiable information (PII), credentials or other sensitive data: tool calls may be logged. The server is provided as is, without warranty.
+    What it does:
+    - Answers Senzing questions (attributes, SDK signatures, configuration, architecture, deployment) grounded with source links, never from training data
+    - Maps your source data to the Senzing Entity Specification
+    - Generates correct, compilable Senzing SDK code (Python, Java, C# and more) with source attribution
+    - Explains Senzing errors and how to fix them
+    - Guides Senzing SDK installation with the official platform-specific steps
+    - Provides sample data to see entity resolution work
+
+    Where it runs:
+    - Codex: maps, generates and runs code against your own installed Senzing SDK.
+    - ChatGPT: grounded answers, mapping guidance and code generation. Nothing executes on your machine; resolving data needs the Senzing SDK on a machine you control.
+
+    What to expect:
+    - Grounded, not guessed: every Senzing fact and every line of SDK code comes from official Senzing sources, never the model's memory.
+    - Your data stays private: resolution runs locally against your own Senzing SDK; records are never sent to Senzing.
+    - No fake results: if the Senzing SDK isn't available it says so and helps you install; it never invents match scores or merges.
+
+    Data: the plugin calls one remote service, the hosted Senzing MCP server, for Senzing knowledge. It sends the questions the assistant asks and their arguments, which, when you are mapping, include your source field names and mapping choices. What is logged and retained is covered by the Senzing MCP privacy policy.
   developerName: Senzing, Inc.
   category: Developer Tools
   capabilities:
+    - Answer Senzing questions with source links
     - Map source data to the Senzing Entity Specification
-    - Generate Senzing SDK code from indexed examples
-    - Search Senzing documentation
-    - Explain Senzing error codes
+    - Generate Senzing SDK code with source attribution
+    - Explain Senzing errors and how to fix them
     - Guide Senzing SDK installation
-    - Provide entity resolution sample data
+    - Provide sample data to see entity resolution work
   websiteURL: https://mcp.senzing.com
   supportURL: https://mcp.senzing.com/docs#support
   privacyPolicyURL: https://mcp.senzing.com/privacy
   termsOfServiceURL: https://senzing.com/terms-of-use
   defaultPrompt:
     - Which Senzing attributes should I map a customer name and address to?
-    - Show me Python code that adds records with the Senzing SDK.
-    - How do I install the Senzing SDK on Ubuntu?
+    - What does Senzing error 0033E mean?
+    - Add Senzing search to my Python app.
   brandColor: "#F57826"
   brandColorDark: "#F57826"
   composerIcon: ./assets/icon.png
@@ -97,19 +118,21 @@ review:
           NAME_LAST or NAME_FULL, and the ADDR_* attributes), explains when to use
           NAME_FULL instead of parsed name parts, and cites senzing.com documentation.
       - description: Explain a Senzing error code
-        prompt: What does Senzing error SENZ0005 mean?
+        prompt: What does Senzing error 0033E mean?
         tools_triggered: explain_error_code
         expected_behavior: >-
-          Identifies SENZ0005 as EAS_ERR_EXCEEDED_MAX_RETRIES (exceeded the maximum
-          number of retries), gives resolution steps and links the Senzing engine
-          error code reference.
-      - description: Generate SDK code for loading records
-        prompt: Show me Python code that adds records with the Senzing SDK.
+          Identifies it as SENZ0033 EAS_ERR_UNKNOWN_DSRC_RECORD_ID (unknown
+          record), lists causes such as a DATA_SOURCE and RECORD_ID pair that was
+          never loaded or is misspelled, gives resolution steps and links the
+          Senzing engine error code reference.
+      - description: Generate SDK code for searching
+        prompt: Add Senzing search to my Python app.
         tools_triggered: generate_scaffold
         expected_behavior: >-
-          Returns Python add-records examples from the senzing/code-snippets-v4
-          repository with GitHub source links, and warns that the PyPI senzing
-          package is not the supported install path.
+          Returns Python search examples from the senzing/code-snippets-v4
+          repository with GitHub source links, notes that the Senzing Python SDK
+          is supported on Linux, and warns that the PyPI senzing package is not
+          the supported install path.
       - description: Guide SDK installation on Linux
         prompt: How do I install the Senzing SDK on Ubuntu?
         tools_triggered: sdk_guide
