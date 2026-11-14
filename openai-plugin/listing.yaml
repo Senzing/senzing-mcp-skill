@@ -29,7 +29,7 @@ mcp:
 manifest:
   name: senzing
   description: >-
-    Entity resolution: point Codex at your data, it does the work and you have
+    Entity resolution: point ChatGPT at your data, it does the work and you have
     results today.
   author:
     name: Senzing, Inc.
@@ -58,13 +58,13 @@ interface:
   displayName: Senzing
   shortDescription: Entity resolution
   longDescription: |-
-    Entity resolution: point Codex at your data, it does the work and you have results today.
+    Entity resolution: point ChatGPT at your data, it does the work and you have results today.
 
     SENZING® entity resolution finds, deduplicates, links and resolves person and organization records within and across data sources, building an identity-resolved graph with no training or tuning. The Senzing SDK is used for master data management (MDM), customer 360, fraud detection, compliance/know your customer (KYC), sanctions and exclusion screening, supply chain/know your business (KYB) and identity intelligence.
 
     How it works: three actors, and only one of them sees your data.
-    - The Senzing MCP server (mcp.senzing.com) supplies the knowledge: entity specification, SDK signatures, official install and mapping procedures, error catalog. It sees the questions the assistant asks it, never your records.
-    - ChatGPT or Codex does the work: it writes Senzing SDK code from that grounding and, in Codex, runs it.
+    - The Senzing MCP server (mcp.senzing.com) supplies the knowledge: entity specification, SDK signatures, official install and mapping procedures, error catalog. It sees the questions ChatGPT asks it, never your records.
+    - ChatGPT does the work: it writes Senzing SDK code from that grounding and runs it.
     - Your Senzing SDK resolves the records, on your machine.
 
     What it does:
@@ -75,16 +75,12 @@ interface:
     - Guides Senzing SDK installation with the official platform-specific steps
     - Provides sample data to see entity resolution work
 
-    Where it runs:
-    - Codex: maps, generates and runs code against your own installed Senzing SDK.
-    - ChatGPT: grounded answers, mapping guidance and code generation. Nothing executes on your machine; resolving data needs the Senzing SDK on a machine you control.
-
     What to expect:
     - Grounded, not guessed: every Senzing fact and every line of SDK code comes from official Senzing sources, never the model's memory.
     - Your data stays private: resolution runs locally against your own Senzing SDK; records are never sent to Senzing.
     - No fake results: if the Senzing SDK isn't available it says so and helps you install; it never invents match scores or merges.
 
-    Data: the plugin calls one remote service, the hosted Senzing MCP server, for Senzing knowledge. It sends the questions the assistant asks and their arguments, which, when you are mapping, include your source field names and mapping choices. What is logged and retained is covered by the Senzing MCP privacy policy.
+    Data: the plugin calls one remote service, the hosted Senzing MCP server, for Senzing knowledge. It sends the questions ChatGPT asks and their arguments, which, when you are mapping, include your source field names and mapping choices. What is logged and retained is covered by the Senzing MCP privacy policy.
   developerName: Senzing, Inc.
   category: Developer Tools
   capabilities:
