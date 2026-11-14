@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=build_openai_plugin --cov-report=term-missing --cov-fail-under=100"
+pythonpath = ["scripts"]
+
+[tool.coverage.report]
+exclude_lines = ['if __name__ == "__main__":']
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]

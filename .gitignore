@@ -1,1 +1,5 @@
 CLAUDE.md
+dist/
+.coverage
+__pycache__/
+.pytest_cache/

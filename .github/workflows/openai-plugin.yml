@@ -1,0 +1,66 @@
+name: OpenAI plugin
+
+# Validates and builds the OpenAI plugin package (ChatGPT and Codex directory)
+# from openai-plugin/listing.yaml and the skill. The ZIP is a workflow artifact
+# on every run and a release asset when a GitHub release is published; upload it
+# to the OpenAI plugin submission portal.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Test and build the OpenAI plugin ZIP
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # release asset upload
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: |
+          ruff check scripts tests
+          ruff format --check scripts tests
+
+      - name: Test (100% coverage, live schema and MCP contract checks)
+        run: pytest
+
+      - name: Build ZIP
+        id: build
+        run: |
+          set -euo pipefail
+          ZIP=$(python scripts/build_openai_plugin.py \
+            --listing openai-plugin/listing.yaml \
+            --limits openai-plugin/limits.yaml \
+            --repo-root . \
+            --out-dir dist)
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: openai-plugin
+          path: ${{ steps.build.outputs.zip }}
+          if-no-files-found: error
+
+      - name: Attach ZIP to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ZIP: ${{ steps.build.outputs.zip }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$ZIP" --clobber
