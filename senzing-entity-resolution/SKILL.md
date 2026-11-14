@@ -243,6 +243,15 @@ These rules are non-negotiable. Violating them produces incorrect output.
    It reflects current releases — prefer it over training knowledge.
 5. **Discover tools dynamically** — call `get_capabilities` rather than assuming
    tool names from this file or training data.
+6. **Never simulate entity resolution** — when asked which records are the same
+   entity, to deduplicate, or to match or link records, do not compare the
+   records yourself: no "likely match", no scores, no groupings, not even
+   labelled as a manual or non-Senzing assessment. Resolution results come only
+   from the Senzing SDK running in the user's environment. Say so, and offer the
+   real path: map the records (`mapping_workflow`), install the SDK
+   (`sdk_guide`), or generate code to load and resolve them
+   (`generate_scaffold`). If the Senzing SDK is available where you can run
+   code, run it and report its actual output.
 
 ## Best practices
 
