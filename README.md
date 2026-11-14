@@ -84,8 +84,11 @@ and checks them against the directory submission limits in
 the skill's `metadata.version`.
 
 The [OpenAI plugin workflow](.github/workflows/openai-plugin.yml) tests and
-builds the ZIP on every pull request and push, and attaches it to each published
-GitHub release. To build locally:
+builds the ZIP on every pull request and push. When a push to `main` carries a
+plugin version with no GitHub release yet, it creates release `v<version>` with
+the ZIP attached ([`scripts/release_openai_plugin.sh`](scripts/release_openai_plugin.sh)),
+so each version sync produces a ready-to-upload ZIP. OpenAI has no upload API,
+so the upload itself stays manual. To build locally:
 
 ```bash
 python -m pip install -r requirements-dev.txt
