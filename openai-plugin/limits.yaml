@@ -1,0 +1,73 @@
+# OpenAI plugin directory submission limits, enforced by
+# scripts/build_openai_plugin.py before a ZIP is produced.
+# Source: https://developers.openai.com/plugins/deploy/submission
+# (Listing metadata, Package identity, review case tables).
+
+plugin_schema: https://agent-plugins.org/schemas/1.0.0/plugin.schema.json
+mcp_schema: https://agent-plugins.org/schemas/1.0.0/mcp.schema.json
+
+name_pattern: "^(?!.*(?:--|\\.\\.))[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$"
+name_max_chars: 64
+version_pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+manifest_description_max_chars: 4000
+
+interface_max_chars:
+  displayName: 30
+  shortDescription: 30
+  longDescription: 4000
+  developerName: 80
+  websiteURL: 1024
+  supportURL: 1024
+  privacyPolicyURL: 1024
+  termsOfServiceURL: 1024
+
+# Required for an MCP plugin submission; the URLs must be HTTPS.
+interface_required:
+  - displayName
+  - shortDescription
+  - longDescription
+  - developerName
+  - category
+  - websiteURL
+  - supportURL
+  - privacyPolicyURL
+  - termsOfServiceURL
+  - logo
+  - composerIcon
+https_fields:
+  - websiteURL
+  - supportURL
+  - privacyPolicyURL
+  - termsOfServiceURL
+icon_fields:
+  - logo
+  - composerIcon
+
+capabilities:
+  max_items: 20
+  max_chars: 120
+default_prompt:
+  max_items: 3
+  max_chars: 128
+
+# Minimum contrast ratio of each brand color against the theme background.
+brand_colors:
+  brandColor:
+    background: "#FFFFFF"
+    min_ratio: 2.0
+  brandColorDark:
+    background: "#212121"
+    min_ratio: 2.0
+
+icon:
+  min_px: 48
+  max_px: 4096
+  max_bytes: 5242880
+
+review_cases:
+  positive:
+    count: 5
+    required: [description, prompt, tools_triggered, expected_behavior]
+  negative:
+    count: 3
+    required: [description, prompt]

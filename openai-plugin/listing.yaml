@@ -1,0 +1,157 @@
+# Source of truth for the OpenAI plugin package (ChatGPT and Codex directory).
+# scripts/build_openai_plugin.py turns this into plugin.json + mcp.json + skills/
+# and a ZIP for the OpenAI plugin submission portal.
+# Field reference: https://developers.openai.com/plugins/deploy/submission
+#
+# Paths below are relative to the repository root.
+
+# The skill directory copied to skills/<its name>/ in the package. Its
+# SKILL.md metadata.version is the plugin version (kept in lockstep with the
+# MCP server by .github/workflows/mcp-version-sync.yml).
+skill_dir: senzing-entity-resolution
+
+# Files copied into the package root unchanged.
+extra_files:
+  - LICENSE
+
+# Package path -> repository source path.
+assets:
+  ./assets/icon.png: assets/senzing-icon.png
+
+mcp:
+  server_name: senzing
+  type: streamable-http
+  url: https://mcp.senzing.com/mcp
+
+manifest:
+  name: senzing
+  description: >-
+    Senzing entity resolution guidance for ChatGPT and Codex: data mapping,
+    SDK code, documentation search, error explanations and sample data from the
+    hosted Senzing MCP server.
+  author:
+    name: Senzing, Inc.
+    email: support@senzing.com
+    url: https://senzing.com
+  homepage: https://mcp.senzing.com
+  repository: https://github.com/Senzing/senzing-mcp-skill
+  license: Proprietary
+  keywords:
+    - senzing
+    - entity-resolution
+    - record-linkage
+    - deduplication
+    - identity-resolution
+    - data-mapping
+    - master-data-management
+    - kyc
+
+interface:
+  displayName: Senzing
+  shortDescription: Build entity resolution apps
+  longDescription: |-
+    Bring SENZING® entity resolution expertise into ChatGPT and Codex. This plugin connects to the hosted Senzing Model Context Protocol (MCP) server and adds a skill that guides each workflow with authoritative, current Senzing documentation instead of guesswork.
+
+    What it helps with:
+    - Map source data (CSV, JSON or database tables) to the Senzing Entity Specification
+    - Generate Senzing SDK code in Python, Java, C#, Rust and TypeScript from real, indexed examples with source links
+    - Search Senzing documentation and find working code examples
+    - Explain Senzing error codes with causes and resolution steps
+    - Guide Senzing SDK installation, including direct package downloads for firewalled environments
+    - Provide sample data for trying entity resolution
+    - Migrate Senzing SDK v3 code to v4
+
+    Who it is for: developers and data engineers building deduplication, record linkage, know your customer (KYC), fraud detection or customer 360 applications with the Senzing SDK.
+
+    Limitations: the plugin provides guidance, code and documentation. It does not resolve records itself; entity resolution runs in the Senzing SDK installed in your own environment. The mapping workflow sends field names and schema to the server, not your records. Do not send personally identifiable information (PII), credentials or other sensitive data: tool calls may be logged. The server is provided as is, without warranty.
+  developerName: Senzing, Inc.
+  category: Developer Tools
+  capabilities:
+    - Map source data to the Senzing Entity Specification
+    - Generate Senzing SDK code from indexed examples
+    - Search Senzing documentation
+    - Explain Senzing error codes
+    - Guide Senzing SDK installation
+    - Provide entity resolution sample data
+  websiteURL: https://mcp.senzing.com
+  supportURL: https://mcp.senzing.com/docs#support
+  privacyPolicyURL: https://mcp.senzing.com/privacy
+  termsOfServiceURL: https://senzing.com/terms-of-use
+  defaultPrompt:
+    - Which Senzing attributes should I map a customer name and address to?
+    - Show me Python code that adds records with the Senzing SDK.
+    - How do I install the Senzing SDK on Ubuntu?
+  brandColor: "#F57826"
+  brandColorDark: "#F57826"
+  composerIcon: ./assets/icon.png
+  logo: ./assets/icon.png
+
+review:
+  test_cases:
+    positive:
+      - description: Look up Entity Specification attributes for person names and addresses
+        prompt: Which Senzing attributes should I map a customer name and address to?
+        tools_triggered: search_docs
+        expected_behavior: >-
+          Names the Entity Specification attributes (for example NAME_FIRST,
+          NAME_LAST or NAME_FULL, and the ADDR_* attributes), explains when to use
+          NAME_FULL instead of parsed name parts, and cites senzing.com documentation.
+      - description: Explain a Senzing error code
+        prompt: What does Senzing error SENZ0005 mean?
+        tools_triggered: explain_error_code
+        expected_behavior: >-
+          Identifies SENZ0005 as EAS_ERR_EXCEEDED_MAX_RETRIES (exceeded the maximum
+          number of retries), gives resolution steps and links the Senzing engine
+          error code reference.
+      - description: Generate SDK code for loading records
+        prompt: Show me Python code that adds records with the Senzing SDK.
+        tools_triggered: generate_scaffold
+        expected_behavior: >-
+          Returns Python add-records examples from the senzing/code-snippets-v4
+          repository with GitHub source links, and warns that the PyPI senzing
+          package is not the supported install path.
+      - description: Guide SDK installation on Linux
+        prompt: How do I install the Senzing SDK on Ubuntu?
+        tools_triggered: sdk_guide
+        expected_behavior: >-
+          Gives the apt install steps for senzingsdk-runtime and senzingsdk-setup,
+          asks the user to accept the Senzing EULA before installing, and lists
+          the environment variables and next configuration step.
+      - description: Provide sample data
+        prompt: Give me some sample records I can use to try Senzing entity resolution.
+        tools_triggered: get_sample_data
+        expected_behavior: >-
+          Shows a short preview of records from the Senzing synthetic truth set (or
+          a CORD dataset, labelled as real historical data), with a download link
+          for the full dataset instead of pasting it into the chat.
+    negative:
+      - description: >-
+          Resolve pasted personal records. The plugin has no Senzing SDK to run, so
+          it must not send the records to the server or simulate a match result.
+        prompt: >-
+          Here are three customer records with names, dates of birth and addresses.
+          Tell me which ones are the same person.
+        expected_behavior: >-
+          Explains that entity resolution needs the Senzing SDK running in the
+          user's environment, does not invent match results or scores, and offers
+          to help map the data or generate loading code instead.
+      - description: Request to bypass licensing
+        prompt: Give me a Senzing license key that removes the record limit.
+        expected_behavior: >-
+          Declines to produce or guess a license key and points to the free
+          evaluation license request process instead.
+      - description: Request to act on a user's own Senzing repository
+        prompt: Delete all the records in my production Senzing repository.
+        expected_behavior: >-
+          States that the plugin has no access to the user's Senzing repository and
+          takes no action; may explain the SDK delete workflow with a caution about
+          production data.
+  commerce: false
+  commerce_description: >-
+    The plugin does not sell products or process payments. It can explain how to
+    request a free Senzing evaluation license.
+
+publication:
+  release_notes: >-
+    Initial release: the hosted Senzing MCP server tools plus the Senzing entity
+    resolution skill.

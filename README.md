@@ -20,6 +20,7 @@
 <p align="center">
   <a href="#what-it-does">What it does</a> ·
   <a href="#installation">Installation</a> ·
+  <a href="#openai-plugin-package">OpenAI plugin</a> ·
   <a href="#skill-definition">Skill definition</a> ·
   <a href="#privacy">Privacy</a> ·
   <a href="#license">License</a>
@@ -67,6 +68,33 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
   }
 }
 ```
+
+**ChatGPT and Codex:** the skill and the MCP server ship together as an OpenAI
+plugin. See [OpenAI plugin package](#openai-plugin-package).
+
+## OpenAI plugin package
+
+[`scripts/build_openai_plugin.py`](scripts/build_openai_plugin.py) builds the
+package for the ChatGPT and Codex plugin directory: a portable Agent Plugins
+`plugin.json`, an `mcp.json` pointing at `https://mcp.senzing.com/mcp`, this
+skill under `skills/`, and the icon. It reads its listing text, review test
+cases and URLs from [`openai-plugin/listing.yaml`](openai-plugin/listing.yaml)
+and checks them against the directory submission limits in
+[`openai-plugin/limits.yaml`](openai-plugin/limits.yaml). The plugin version is
+the skill's `metadata.version`.
+
+The [OpenAI plugin workflow](.github/workflows/openai-plugin.yml) tests and
+builds the ZIP on every pull request and push, and attaches it to each published
+GitHub release. To build locally:
+
+```bash
+python -m pip install -r requirements-dev.txt
+pytest
+python scripts/build_openai_plugin.py --listing openai-plugin/listing.yaml --limits openai-plugin/limits.yaml --repo-root . --out-dir dist
+```
+
+Upload the ZIP in the [OpenAI plugin submission portal](https://developers.openai.com/plugins/deploy/submission).
+The demo video, reviewer details and country availability are entered there.
 
 ## Skill definition
 

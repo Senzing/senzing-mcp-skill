@@ -12,7 +12,7 @@ description: >-
   identity resolution, master data management, or needs to resolve who is who
   across datasets.
 license: Proprietary
-compatibility: Requires Senzing MCP server (https://mcp.senzing.com/mcp) connected via claude mcp add or MCP config
+compatibility: Requires the Senzing MCP server (https://mcp.senzing.com/mcp), added through the client MCP configuration or bundled by a plugin
 metadata:
   author: senzing
   version: "1.46.0"
