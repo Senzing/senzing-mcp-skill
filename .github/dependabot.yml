@@ -1,0 +1,28 @@
+---
+# Dependency updates for this repo. It had none until 2026-11-22, so
+# requirements-dev.txt pins and the SHA-pinned actions were both frozen: the
+# workflows still referenced actions/checkout v4.3.1 while sibling repos had
+# moved to v7.0.1.
+#
+# `cooldown.default-days: 21` is the house setting (Senzing/mcp,
+# Senzing/senzing-claude-plugins, 999gz-Ops/sz-mcp-coworker): a release has to
+# sit for three weeks before we take it, so a compromised publish is likely to
+# be caught and yanked before it reaches us. A manual `pip install -U` bypasses
+# that window, so prefer merging these PRs over hand-bumping.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 21
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 21
