@@ -69,10 +69,21 @@ claude mcp add --transport http senzing https://mcp.senzing.com/mcp
 }
 ```
 
-**ChatGPT and Codex:** the skill and the MCP server ship together as an OpenAI
-plugin. See [OpenAI plugin package](#openai-plugin-package).
+**ChatGPT and Codex:** the skill and the MCP server ship together as the
+[Senzing plugin in the ChatGPT and Codex plugin directory](https://chatgpt.com/plugins/plugin_asdk_app_6af86f982ca08191b15c32c5c9c485a1).
+Open the listing and click **Install plugin**. How the package is built is in
+[OpenAI plugin package](#openai-plugin-package).
+
+**Codex, MCP server only:**
+
+```bash
+codex mcp add senzing --url https://mcp.senzing.com/mcp
+```
 
 ## OpenAI plugin package
+
+The package is live in the
+[ChatGPT and Codex plugin directory](https://chatgpt.com/plugins/plugin_asdk_app_6af86f982ca08191b15c32c5c9c485a1).
 
 [`scripts/build_openai_plugin.py`](scripts/build_openai_plugin.py) builds the
 package for the ChatGPT and Codex plugin directory: a portable Agent Plugins
