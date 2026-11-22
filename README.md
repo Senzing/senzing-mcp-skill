@@ -115,7 +115,7 @@ The demo video, reviewer details and country availability are entered there.
 See [SKILL.md](senzing-entity-resolution/SKILL.md) for the full skill manifest
 including tool reference, workflows, best practices, and entity resolution glossary.
 
-Verified against Senzing MCP server **v1.46.3** (2026-11). The skill's
+Verified against Senzing MCP server **v1.47.0** (2026-11). The skill's
 `version` field tracks the server version it was validated against.
 
 ## Privacy
