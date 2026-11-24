@@ -1,0 +1,48 @@
+# Microsoft 365 / Microsoft Copilot app package rules, enforced by
+# scripts/build_m365_plugin.py before a ZIP is produced.
+# Sources: Teams app manifest v1.28 schema, Microsoft 365 app certification
+# feedback (outline icon, first mention of Microsoft Copilot).
+
+schema: https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json
+manifest_version: "1.28"
+manifest_file: manifest.json
+
+version_pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+app_id_pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+accent_color_pattern: "^#[0-9A-Fa-f]{6}$"
+
+# Manifest field (dotted path) -> maximum characters.
+max_chars:
+  name.short: 30
+  name.full: 100
+  description.short: 80
+  description.full: 4000
+  agentConnectors.0.displayName: 128
+
+https_fields:
+  - developer.websiteUrl
+  - developer.privacyUrl
+  - developer.termsOfUseUrl
+  - agentConnectors.0.toolSource.remoteMcpServer.mcpServerUrl
+
+# The first mention of term in each field must be the full phrase.
+first_mention:
+  term: Copilot
+  phrase: Microsoft Copilot
+  fields:
+    - description.short
+    - description.full
+
+# Icon -> exact PNG size. white_on_transparent: every visible pixel is white
+# and at least one pixel is fully transparent (8-bit RGBA required).
+icons:
+  color:
+    width: 192
+    height: 192
+  outline:
+    width: 32
+    height: 32
+    white_on_transparent: true
+
+# MCP streamable HTTP handshake used to fetch the live tools/list.
+mcp_protocol_version: "2025-06-18"

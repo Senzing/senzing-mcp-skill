@@ -1,0 +1,105 @@
+name: Plugin packages
+
+# Validates and builds the plugin packages from the skill:
+# - OpenAI (ChatGPT and Codex directory) from openai-plugin/listing.yaml
+# - Microsoft 365 / Microsoft Copilot from m365-plugin/package.yaml, with the
+#   connector's tool description fetched from the live MCP server
+# The ZIPs are workflow artifacts on every run. On a push to main, each ZIP is
+# attached to GitHub release v<version> (created if it does not exist yet):
+# upload them to the OpenAI plugin submission portal and Partner Center (neither
+# has an upload API). A release published by hand also gets both ZIPs attached.
+# One job builds and releases both, so they never race to create the release.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: plugin-packages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Test and build the plugin ZIPs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # release asset upload
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: |
+          ruff check scripts tests
+          ruff format --check scripts tests
+
+      - name: Test (100% coverage, live schema and MCP contract checks)
+        run: pytest
+
+      - name: Build OpenAI ZIP
+        id: openai
+        run: |
+          set -euo pipefail
+          ZIP=$(python scripts/build_openai_plugin.py \
+            --listing openai-plugin/listing.yaml \
+            --limits openai-plugin/limits.yaml \
+            --repo-root . \
+            --out-dir dist)
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - name: Build Microsoft 365 ZIP
+        id: m365
+        run: |
+          set -euo pipefail
+          ZIP=$(python scripts/build_m365_plugin.py \
+            --package m365-plugin/package.yaml \
+            --limits m365-plugin/limits.yaml \
+            --repo-root . \
+            --out-dir dist)
+          echo "zip=$ZIP" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: openai-plugin
+          path: ${{ steps.openai.outputs.zip }}
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: m365-plugin
+          path: ${{ steps.m365.outputs.zip }}
+          if-no-files-found: error
+
+      - name: Attach ZIPs to the release for this version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_ZIP: ${{ steps.openai.outputs.zip }}
+          M365_ZIP: ${{ steps.m365.outputs.zip }}
+          TARGET: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          scripts/release_plugin.sh "$OPENAI_ZIP" "$TARGET" "https://platform.openai.com/plugins → Senzing → Upload new version"
+          scripts/release_plugin.sh "$M365_ZIP" "$TARGET" "Partner Center → Marketplace offers → senzing → Packages"
+
+      - name: Attach ZIPs to a published release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_ZIP: ${{ steps.openai.outputs.zip }}
+          M365_ZIP: ${{ steps.m365.outputs.zip }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$OPENAI_ZIP" "$M365_ZIP" --clobber

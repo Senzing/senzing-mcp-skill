@@ -1,6 +1,6 @@
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=build_openai_plugin --cov-report=term-missing --cov-fail-under=100"
+addopts = "--cov=build_openai_plugin --cov=build_m365_plugin --cov-report=term-missing --cov-fail-under=100"
 pythonpath = ["scripts"]
 
 [tool.coverage.report]

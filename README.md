@@ -21,6 +21,7 @@
   <a href="#what-it-does">What it does</a> ·
   <a href="#installation">Installation</a> ·
   <a href="#openai-plugin-package">OpenAI plugin</a> ·
+  <a href="#microsoft-365-copilot-package">Microsoft 365 Copilot</a> ·
   <a href="#skill-definition">Skill definition</a> ·
   <a href="#privacy">Privacy</a> ·
   <a href="#license">License</a>
@@ -94,10 +95,10 @@ and checks them against the directory submission limits in
 [`openai-plugin/limits.yaml`](openai-plugin/limits.yaml). The plugin version is
 the skill's `metadata.version`.
 
-The [OpenAI plugin workflow](.github/workflows/openai-plugin.yml) tests and
+The [plugin packages workflow](.github/workflows/plugin-packages.yml) tests and
 builds the ZIP on every pull request and push. When a push to `main` carries a
 plugin version with no GitHub release yet, it creates release `v<version>` with
-the ZIP attached ([`scripts/release_openai_plugin.sh`](scripts/release_openai_plugin.sh)),
+the ZIP attached ([`scripts/release_plugin.sh`](scripts/release_plugin.sh)),
 so each version sync produces a ready-to-upload ZIP. OpenAI has no upload API,
 so the upload itself stays manual. To build locally:
 
@@ -109,6 +110,31 @@ python scripts/build_openai_plugin.py --listing openai-plugin/listing.yaml --lim
 
 Upload the ZIP in the [OpenAI plugin submission portal](https://developers.openai.com/plugins/deploy/submission).
 The demo video, reviewer details and country availability are entered there.
+
+## Microsoft 365 Copilot package
+
+[`scripts/build_m365_plugin.py`](scripts/build_m365_plugin.py) builds the
+Microsoft 365 / Microsoft Copilot app package: a Teams app manifest (v1.28)
+with an anonymous remote MCP connector to `https://mcp.senzing.com/mcp`, the
+connector's tool description file (fetched from the live server's `tools/list`),
+this skill under `skills/` and the color and outline icons. It reads the app id,
+names, links and descriptions from
+[`m365-plugin/package.yaml`](m365-plugin/package.yaml) and checks them against
+the manifest and certification rules in
+[`m365-plugin/limits.yaml`](m365-plugin/limits.yaml), including that the first
+mention of Copilot is "Microsoft Copilot" and that the outline icon is white on
+transparent. The app version is the skill's `metadata.version`; the app id must
+never change.
+
+The [plugin packages workflow](.github/workflows/plugin-packages.yml) builds this
+ZIP alongside the OpenAI one and attaches it to the same release `v<version>`.
+To build locally:
+
+```bash
+python scripts/build_m365_plugin.py --package m365-plugin/package.yaml --limits m365-plugin/limits.yaml --repo-root . --out-dir dist
+```
+
+Upload the ZIP in Partner Center under **Marketplace offers → senzing → Packages**.
 
 ## Skill definition
 
