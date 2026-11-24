@@ -4,27 +4,32 @@
 # package (OpenAI, Microsoft 365), one after the other in the same job so the
 # two never race to create the release.
 #
-# Usage: release_plugin.sh <zip> <target-commit> <upload-instructions>
+# Usage: release_plugin.sh <zip> <target-commit> <upload-instructions> [<release-version>]
 #
-# The version is the "version" in the ZIP's root JSON manifest.
+# The release version is <release-version> when given, else the "version" in
+# the ZIP's root JSON manifest. The Microsoft 365 app has its own app version
+# (in its ZIP name), so it passes the skill version to land in the same release.
 # - No release for the version yet: create it (tag at <target-commit>) with the ZIP.
 # - Release exists without this ZIP: upload it and add its line to the notes.
 # - Release exists with an identical ZIP: nothing to do.
 # - Release exists with a different ZIP: warn. Releases are per-version
 #   snapshots and OpenAI and Partner Center need a new version number for each
 #   package update, so a listing or skill change on main ships with the next
-#   version bump.
+#   version bump (for Microsoft 365, the next app_version bump: a new ZIP name).
 set -euo pipefail
 
-usage="usage: release_plugin.sh <zip> <target-commit> <upload-instructions>"
+usage="usage: release_plugin.sh <zip> <target-commit> <upload-instructions> [<release-version>]"
 zip=${1:?$usage}
 target=${2:?$usage}
 where=${3:?$usage}
+version=${4:-}
 
-members=$(unzip -Z1 "$zip" | grep -E '^[^/]+\.json$' || true)
-version=$(for member in $members; do unzip -p "$zip" "$member" | jq -r '.version // empty'; done | sort -u)
+if [[ -z $version ]]; then
+  members=$(unzip -Z1 "$zip" | grep -E '^[^/]+\.json$' || true)
+  version=$(for member in $members; do unzip -p "$zip" "$member" | jq -r '.version // empty'; done | sort -u)
+fi
 if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "::error::${zip}: expected one root manifest version, found '${version}'"
+  echo "::error::${zip}: expected one release version, found '${version}'"
   exit 1
 fi
 

@@ -1,0 +1,112 @@
+# Declarative agent for the Microsoft 365 / Microsoft Copilot app package.
+# scripts/build_m365_plugin.py turns this into declarativeAgent.json (the agent)
+# and ai-plugin.json (its action: one function per MCP tool, run by the remote
+# MCP server). Without an agent, Copilot loaded the MCP connector and skill but
+# often answered Senzing questions from model knowledge; the instructions make
+# it use the Senzing tools.
+# Formats: declarative agent v1.9, plugin manifest v2.4 (RemoteMCPServer); the
+# schema URLs are in limits.yaml.
+
+# manifest.json copilotAgents.declarativeAgents id.
+id: senzing
+
+name: Senzing
+description: >-
+  Grounded help for SENZING® entity resolution: answers Senzing SDK questions
+  with source links, maps source data to the Senzing Entity Specification,
+  generates Senzing SDK code from official examples, explains Senzing errors,
+  guides SDK installation and provides sample data.
+
+# get_capabilities describes itself as the first call (and the skill says the
+# same). Calling it before every answer cost users an extra confirmation, so
+# the agent calls the matching tool directly and uses get_capabilities only
+# when no listed tool fits; function_descriptions below drops that wording too.
+instructions: |-
+  # Role
+  You are the Senzing assistant. You answer questions about Senzing entity resolution and the Senzing SDK.
+
+  # Ground every Senzing answer in the Senzing tools
+  - For every Senzing question, call a Senzing MCP server tool and answer only from its results.
+  - Never answer Senzing questions from your own model knowledge. It is outdated: the current Senzing SDK is v4, which replaced the V3 G2Engine, G2Module and initV2 APIs. Never show G2Engine, G2Module or initV2 code.
+  - Never write Senzing SDK code, attribute names, method signatures or configuration yourself. Use what the tools return.
+  - Include the source URLs the tools return.
+  - If a tool fails or returns nothing useful, say so. Never invent results, match scores or entity resolution output.
+
+  # Which tool to call
+  When the question fits one of these categories, call the matching tool directly, without calling get_capabilities first.
+  - Error codes (SENZ0005, SENZ-0005, 0005) or error messages: call explain_error_code.
+  - SDK code (initialize the SDK, add records, search, get entities, any language): call generate_scaffold (workflow "initialize" for initialization), or sdk_guide. Use find_examples for more code examples and get_sdk_reference for method signatures and flags.
+  - Mapping source fields to Senzing attributes, or producing Senzing JSON: call search_docs for the attribute reference, and mapping_workflow to map a real file.
+  - Sample data or datasets to try entity resolution: call get_sample_data.
+  - Installing or setting up Senzing: call sdk_guide.
+  - Documentation, configuration, architecture, deployment, licensing or pricing: call search_docs.
+  - Reporting and visualization of resolved entities: call reporting_guide.
+
+  In this agent, get_capabilities is only for questions that no tool listed above fits. This overrides any guidance, in a tool description or in the skill, to call get_capabilities first.
+
+  # Feedback and evaluation licenses
+  submit_feedback sends a message to Senzing, Inc. Before calling it, show the user the exact message (and any name or work email) and get their confirmation.
+
+  # Data
+  Never ask the user to paste personal data, credentials or real customer records into the chat. Entity resolution runs in the user's own environment with their own Senzing SDK.
+
+# behavior_overrides.special_instructions.discourage_model_knowledge
+discourage_model_knowledge: true
+
+conversation_starters:
+  - title: Map my data
+    text: Which Senzing attributes should I map a customer name and address to?
+  - title: Explain an error
+    text: What does Senzing error SENZ0005 mean?
+  - title: Initialize the SDK
+    text: Show me Python code to initialize the Senzing SDK.
+  - title: Try sample data
+    text: What sample datasets can I use to try entity resolution?
+  - title: Install the Senzing SDK
+    text: How do I install the Senzing SDK on Ubuntu?
+
+# ai-plugin.json fields. namespace is also the agent's action id.
+plugin:
+  name_for_human: Senzing
+  namespace: senzing
+  description_for_human: Senzing documentation, SDK code, data mapping, error explanations and sample data.
+  description_for_model: >-
+    Authoritative Senzing entity resolution knowledge: documentation search,
+    Senzing SDK v4 code scaffolds and examples, method signatures, data mapping
+    to the Senzing Entity Specification, error code explanations, installation
+    guides and sample data. Use these tools for every Senzing question instead of
+    model knowledge.
+  privacy_policy_url: https://mcp.senzing.com/privacy
+  legal_info_url: https://senzing.com/terms-of-use
+  contact_email: support@senzing.com
+
+# MCP tools left out of the plugin functions, run_for_functions and the tool
+# description file. analyze_record needs a local workspace_dir and returns a
+# script to run locally, which Copilot cannot do.
+excluded_tools:
+  - analyze_record
+
+# Plugin function descriptions that replace the MCP server's, by tool name.
+function_descriptions:
+  get_capabilities: >-
+    Get server version, capabilities overview, available tools, suggested
+    workflows, and getting started guidance. Returns server_info with name,
+    version, and Senzing version, and a manifest of all coverage areas
+    (pricing, SDK, deployment, troubleshooting, database, configuration, data
+    mapping, etc.). Use it only when no other Senzing tool clearly fits the
+    question, to find which Senzing tool to call.
+
+# Per-function capabilities: default for every included MCP tool, overrides by
+# tool name. confirmation is AdaptiveCard or absent (limits.yaml
+# plugin.confirmation_types). Copilot shows a confirmation card on every call
+# regardless; submit_feedback sends a message to Senzing, Inc., so its
+# AdaptiveCard confirmation is set explicitly.
+function_capabilities:
+  default:
+    data_handling: [GetPublicData]
+  overrides:
+    mapping_workflow:
+      data_handling: [DataTransform]
+    submit_feedback:
+      confirmation: AdaptiveCard
+      data_handling: [ResourceStateUpdate]

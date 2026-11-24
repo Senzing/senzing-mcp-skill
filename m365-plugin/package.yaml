@@ -1,17 +1,20 @@
 # Source of truth for the Microsoft 365 / Microsoft Copilot app package
 # (Partner Center: Marketplace offers -> senzing -> Packages).
-# scripts/build_m365_plugin.py turns this into manifest.json, the icons, the
-# MCP tool description file and skills/, plus a deterministic ZIP.
-# Format: https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/configure-plugin-mcp-servers
+# scripts/build_m365_plugin.py turns this and agent.yaml into manifest.json,
+# declarativeAgent.json, ai-plugin.json, the icons, the MCP tool description
+# file and skills/, plus a deterministic ZIP.
 #
 # Paths below are relative to the repository root.
 
-# The skill directory copied to skills/<its name>/ in the package. Its
-# SKILL.md metadata.version is the app version (kept in lockstep with the MCP
-# server by .github/workflows/mcp-version-sync.yml).
+# The skill directory copied to skills/<its name>/ in the package.
 skill_dir: senzing-entity-resolution
 
-# The ZIP is <package_name>-<version>.zip.
+# The app version (manifest.json version, MAJOR.MINOR.PATCH). It is separate
+# from the skill's metadata.version: Teams and Partner Center need a higher
+# version for every package update, so bump it whenever the package changes.
+app_version: 1.47.4
+
+# The ZIP is <package_name>-<app_version>.zip.
 package_name: senzing-m365-plugin
 
 # Never change this id: Teams and Partner Center tie app updates to it.
@@ -45,14 +48,14 @@ links:
   support_email: support@senzing.com
 
 description:
-  # The first mention of Copilot must be "Microsoft Copilot" (Microsoft store validation guideline).
+  # Every mention of Copilot must be "Microsoft Copilot" (Microsoft store validation guideline).
   short: "Entity resolution in Microsoft Copilot: map data, generate SDK code, fix errors"
   # Paragraphs, joined with blank lines. {name} placeholders are filled from
   # the links block.
   full:
     - >-
       SENZING® entity resolution help, grounded in official sources, inside
-      Microsoft Copilot. Copilot answers questions about the Senzing SDK with
+      Microsoft Copilot. It answers questions about the Senzing SDK with
       source links, maps your source data to the Senzing Entity Specification,
       generates Senzing SDK code with source attribution, explains Senzing
       errors, guides SDK installation and provides sample data. The hosted
@@ -66,12 +69,9 @@ description:
     - "Help and documentation: {help}"
     - "Contact us: {contact} or {support_email}"
 
-# Anonymous remote MCP server. Its live tools/list becomes tool_file.
-connector:
-  id: senzing
-  displayName: Senzing MCP server
-  description: >-
-    Senzing documentation, entity specification, SDK signatures and examples,
-    data mapping workflows, error explanations and sample data.
+# Anonymous remote MCP server behind the agent's action (ai-plugin.json
+# runtime). Its live tools/list becomes tool_file and one plugin function per
+# tool; the agent itself is in agent.yaml.
+mcp_server:
   url: https://mcp.senzing.com/mcp
   tool_file: tools/senzing-tools.json

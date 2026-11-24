@@ -114,24 +114,42 @@ The demo video, reviewer details and country availability are entered there.
 ## Microsoft 365 Copilot package
 
 [`scripts/build_m365_plugin.py`](scripts/build_m365_plugin.py) builds the
-Microsoft 365 / Microsoft Copilot app package: a Teams app manifest (v1.28)
-with an anonymous remote MCP connector to `https://mcp.senzing.com/mcp`, the
-connector's tool description file (fetched from the live server's `tools/list`),
-this skill under `skills/` and the color and outline icons. It reads the app id,
-names, links and descriptions from
-[`m365-plugin/package.yaml`](m365-plugin/package.yaml) and checks them against
-the manifest and certification rules in
-[`m365-plugin/limits.yaml`](m365-plugin/limits.yaml), including that the first
-mention of Copilot is "Microsoft Copilot" and that the outline icon is white on
-transparent. The app version is the skill's `metadata.version`; the app id must
-never change.
+Microsoft 365 / Microsoft Copilot app package as a declarative agent:
+
+| File | Contents |
+| --- | --- |
+| `manifest.json` | Teams app manifest (v1.28) that declares one declarative agent |
+| `declarativeAgent.json` | The agent (v1.9): instructions, conversation starters, one action and this skill under `skills/` |
+| `ai-plugin.json` | The action (plugin manifest v2.4): one function per MCP tool, run by the anonymous remote MCP server `https://mcp.senzing.com/mcp` |
+| `tools/senzing-tools.json` | The MCP tool description, fetched from the live server's `tools/list` |
+| `color.png`, `outline.png` | App icons |
+
+The data lives in YAML: app id, version, names, links and descriptions in
+[`m365-plugin/package.yaml`](m365-plugin/package.yaml); the agent's
+instructions, starters, plugin fields, excluded tools and per-function
+descriptions and capabilities in [`m365-plugin/agent.yaml`](m365-plugin/agent.yaml);
+the schemas and Microsoft store validation rules in
+[`m365-plugin/limits.yaml`](m365-plugin/limits.yaml). The builder enforces
+those rules before writing a ZIP: every mention of Copilot is "Microsoft
+Copilot", the outline icon is white on transparent, the instructions fit in
+8,000 characters, `run_for_functions` lists every included MCP tool, each skill
+folder is `skills/<name>` (no leading `./`) and holds `SKILL.md`, confirmations
+are `AdaptiveCard` or absent, and every tool named in `agent.yaml` is one the
+server lists. The tests also validate the three JSON files against their
+published schemas.
+
+The app version is `app_version` in `package.yaml`, separate from the skill's
+`metadata.version`; the app id must never change. Partner Center needs a higher
+version for every package update, so bump `app_version` whenever the package
+changes. The ZIP is `senzing-m365-plugin-<app_version>.zip`.
 
 The [plugin packages workflow](.github/workflows/plugin-packages.yml) builds this
-ZIP alongside the OpenAI one and attaches it to the same release `v<version>`.
-To build locally:
+ZIP alongside the OpenAI one and attaches it to the same release
+`v<skill version>`. A new `app_version` is a new asset there; a changed ZIP with
+an unchanged `app_version` only raises a warning. To build locally:
 
 ```bash
-python scripts/build_m365_plugin.py --package m365-plugin/package.yaml --limits m365-plugin/limits.yaml --repo-root . --out-dir dist
+python scripts/build_m365_plugin.py --package m365-plugin/package.yaml --agent m365-plugin/agent.yaml --limits m365-plugin/limits.yaml --repo-root . --out-dir dist
 ```
 
 Upload the ZIP in Partner Center under **Marketplace offers → senzing → Packages**.

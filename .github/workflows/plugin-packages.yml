@@ -2,10 +2,13 @@ name: Plugin packages
 
 # Validates and builds the plugin packages from the skill:
 # - OpenAI (ChatGPT and Codex directory) from openai-plugin/listing.yaml
-# - Microsoft 365 / Microsoft Copilot from m365-plugin/package.yaml, with the
-#   connector's tool description fetched from the live MCP server
+# - Microsoft 365 / Microsoft Copilot from m365-plugin/package.yaml and
+#   agent.yaml: a declarative agent (manifest.json, declarativeAgent.json,
+#   ai-plugin.json) whose MCP tool description is fetched from the live server
 # The ZIPs are workflow artifacts on every run. On a push to main, each ZIP is
-# attached to GitHub release v<version> (created if it does not exist yet):
+# attached to GitHub release v<skill version> (created if it does not exist
+# yet); the Microsoft 365 ZIP is named for its own app_version, so a new
+# app_version is a new asset there:
 # upload them to the OpenAI plugin submission portal and Partner Center (neither
 # has an upload API). A release published by hand also gets both ZIPs attached.
 # One job builds and releases both, so they never race to create the release.
@@ -66,6 +69,7 @@ jobs:
           set -euo pipefail
           ZIP=$(python scripts/build_m365_plugin.py \
             --package m365-plugin/package.yaml \
+            --agent m365-plugin/agent.yaml \
             --limits m365-plugin/limits.yaml \
             --repo-root . \
             --out-dir dist)
@@ -92,8 +96,9 @@ jobs:
           TARGET: ${{ github.sha }}
         run: |
           set -euo pipefail
+          SKILL_VERSION=$(grep -m1 -E '^[[:space:]]*version:[[:space:]]*"' senzing-entity-resolution/SKILL.md | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')
           scripts/release_plugin.sh "$OPENAI_ZIP" "$TARGET" "https://platform.openai.com/plugins → Senzing → Upload new version"
-          scripts/release_plugin.sh "$M365_ZIP" "$TARGET" "Partner Center → Marketplace offers → senzing → Packages"
+          scripts/release_plugin.sh "$M365_ZIP" "$TARGET" "Partner Center → Marketplace offers → senzing → Packages" "$SKILL_VERSION"
 
       - name: Attach ZIPs to a published release
         if: github.event_name == 'release'
