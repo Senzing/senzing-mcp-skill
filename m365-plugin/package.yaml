@@ -1,0 +1,77 @@
+# Source of truth for the Microsoft 365 / Microsoft Copilot app package
+# (Partner Center: Marketplace offers -> senzing -> Packages).
+# scripts/build_m365_plugin.py turns this into manifest.json, the icons, the
+# MCP tool description file and skills/, plus a deterministic ZIP.
+# Format: https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/configure-plugin-mcp-servers
+#
+# Paths below are relative to the repository root.
+
+# The skill directory copied to skills/<its name>/ in the package. Its
+# SKILL.md metadata.version is the app version (kept in lockstep with the MCP
+# server by .github/workflows/mcp-version-sync.yml).
+skill_dir: senzing-entity-resolution
+
+# The ZIP is <package_name>-<version>.zip.
+package_name: senzing-m365-plugin
+
+# Never change this id: Teams and Partner Center tie app updates to it.
+app_id: c47a1241-83c4-459f-9e91-09f7f36de642
+
+developer:
+  name: Senzing, Inc.
+  # Same domain as privacyUrl (clears DeveloperPrivacyUrlOnDifferentDomainThanWebsiteUrl).
+  websiteUrl: https://mcp.senzing.com
+  privacyUrl: https://mcp.senzing.com/privacy
+  termsOfUseUrl: https://senzing.com/terms-of-use
+
+name:
+  short: Senzing
+  full: Senzing entity resolution for Microsoft Copilot
+
+accent_color: "#F57826"
+
+# Copied to the package root. Microsoft certification requires the outline
+# icon to be the color icon's shape, white on transparent.
+icons:
+  color: m365-plugin/icons/color.png
+  outline: m365-plugin/icons/outline.png
+
+# Sign-up, get started, contact and help links (certification must-fix).
+links:
+  sign_up: https://senzing.com/try-senzing/
+  get_started: https://mcp.senzing.com/docs
+  help: https://senzing.com/docs/
+  contact: https://senzing.com/contact/
+  support_email: support@senzing.com
+
+description:
+  # The first mention of Copilot must be "Microsoft Copilot" (certification must-fix).
+  short: "Entity resolution in Microsoft Copilot: map data, generate SDK code, fix errors"
+  # Paragraphs, joined with blank lines. {name} placeholders are filled from
+  # the links block.
+  full:
+    - >-
+      SENZING® entity resolution help, grounded in official sources, inside
+      Microsoft Copilot. Copilot answers questions about the Senzing SDK with
+      source links, maps your source data to the Senzing Entity Specification,
+      generates Senzing SDK code with source attribution, explains Senzing
+      errors, guides SDK installation and provides sample data. The hosted
+      Senzing MCP server supplies the knowledge: it never sees your records and
+      never connects to a live Senzing instance. Entity resolution itself runs
+      in your own environment with your own Senzing SDK.
+    - >-
+      Sign up: no account is needed to use this app. To run entity resolution
+      on your own data, get the Senzing SDK at {sign_up}
+    - "Get started: {get_started}"
+    - "Help and documentation: {help}"
+    - "Contact us: {contact} or {support_email}"
+
+# Anonymous remote MCP server. Its live tools/list becomes tool_file.
+connector:
+  id: senzing
+  displayName: Senzing MCP server
+  description: >-
+    Senzing documentation, entity specification, SDK signatures and examples,
+    data mapping workflows, error explanations and sample data.
+  url: https://mcp.senzing.com/mcp
+  tool_file: tools/senzing-tools.json

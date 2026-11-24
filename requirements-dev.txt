@@ -1,4 +1,4 @@
-# Build and test dependencies for scripts/build_openai_plugin.py.
+# Build and test dependencies for scripts/build_openai_plugin.py and scripts/build_m365_plugin.py.
 pyyaml==6.0.3
 jsonschema==4.26.0
 pytest==9.2.0
