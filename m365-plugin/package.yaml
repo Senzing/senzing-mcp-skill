@@ -36,7 +36,7 @@ icons:
   color: m365-plugin/icons/color.png
   outline: m365-plugin/icons/outline.png
 
-# Sign-up, get started, contact and help links (certification must-fix).
+# Sign-up, get started, contact and help links (Microsoft store validation guideline).
 links:
   sign_up: https://senzing.com/try-senzing/
   get_started: https://mcp.senzing.com/docs
@@ -45,7 +45,7 @@ links:
   support_email: support@senzing.com
 
 description:
-  # The first mention of Copilot must be "Microsoft Copilot" (certification must-fix).
+  # The first mention of Copilot must be "Microsoft Copilot" (Microsoft store validation guideline).
   short: "Entity resolution in Microsoft Copilot: map data, generate SDK code, fix errors"
   # Paragraphs, joined with blank lines. {name} placeholders are filled from
   # the links block.
