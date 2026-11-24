@@ -233,10 +233,17 @@ def write_package(listing: dict, limits: dict, repo_root: Path, package_dir: Pat
     write_json(package_dir / "mcp.json", build_mcp(listing, limits))
 
 
-def make_zip(package_dir: Path, zip_path: Path) -> None:
-    """Write a byte-reproducible ZIP with plugin.json at its root."""
+def make_zip(package_dir: Path, zip_path: Path, directories: bool = False) -> None:
+    """Write a byte-reproducible ZIP of package_dir.
+
+    directories=True also writes an empty entry for every directory, first.
+    """
     files = sorted(p for p in package_dir.rglob("*") if p.is_file())
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
+        if directories:
+            names = {path.relative_to(package_dir) for path in files}
+            for folder in sorted({parent.as_posix() for name in names for parent in name.parents[:-1]}):
+                archive.writestr(zipfile.ZipInfo(f"{folder}/", ZIP_EPOCH), b"")
         for path in files:
             info = zipfile.ZipInfo(path.relative_to(package_dir).as_posix(), ZIP_EPOCH)
             info.compress_type = zipfile.ZIP_DEFLATED

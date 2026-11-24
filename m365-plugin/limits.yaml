@@ -1,32 +1,73 @@
 # Microsoft 365 / Microsoft Copilot app package rules, enforced by
 # scripts/build_m365_plugin.py before a ZIP is produced.
-# Sources: Teams app manifest v1.28 schema, Microsoft 365 app certification
-# feedback (outline icon, first mention of Microsoft Copilot).
+# Sources: Teams app manifest v1.28, declarative agent v1.9 and plugin manifest
+# v2.4 schemas, and Microsoft store validation (outline icon, mentions of
+# Microsoft Copilot, the declarative agent rules below).
+#
+# Each document has its file name in the package, its schema and version, and
+# field rules keyed by dotted path ("items.0.id"):
+#   max_chars / max_items / min_items: length limits
+#   https_fields: must be https:// URLs
 
-schema: https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json
-manifest_version: "1.28"
-manifest_file: manifest.json
+manifest:
+  file: manifest.json
+  schema: https://developer.microsoft.com/json-schemas/teams/v1.28/MicrosoftTeams.schema.json
+  version: "1.28"
+  max_chars:
+    name.short: 30
+    name.full: 100
+    description.short: 80
+    description.full: 4000
+  # Teams supports one declarative agent per app.
+  max_items:
+    copilotAgents.declarativeAgents: 1
+  https_fields:
+    - developer.websiteUrl
+    - developer.privacyUrl
+    - developer.termsOfUseUrl
+
+agent:
+  file: declarativeAgent.json
+  schema: https://developer.microsoft.com/json-schemas/copilot/declarative-agent/v1.9/schema.json
+  version: v1.9
+  max_chars:
+    name: 100
+    description: 1000
+    instructions: 8000
+  min_items:
+    conversation_starters: 1
+    actions: 1
+  max_items:
+    conversation_starters: 12
+    actions: 10
+    agent_skills: 8
+  # Teams resolves <folder>/SKILL.md and rejects a leading "./"
+  # ("Failed to resolve SKILL.md in skill directory").
+  skill_folder_pattern: "^skills/[A-Za-z0-9][A-Za-z0-9_-]*$"
+
+plugin:
+  file: ai-plugin.json
+  schema: https://developer.microsoft.com/json-schemas/copilot/plugin/v2.4/schema.json
+  version: v2.4
+  # Teams rejects a plugin with no functions (MissingPluginFunction).
+  min_items:
+    functions: 1
+  https_fields:
+    - privacy_policy_url
+    - legal_info_url
+    - runtimes.0.spec.url
+  # Teams rejects "None"; omit confirmation for no explicit confirmation.
+  confirmation_types: [AdaptiveCard]
+  # Teams requires run_for_functions to list every statically included MCP
+  # tool; the builder checks it against the functions.
 
 version_pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
 app_id_pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 accent_color_pattern: "^#[0-9A-Fa-f]{6}$"
 
-# Manifest field (dotted path) -> maximum characters.
-max_chars:
-  name.short: 30
-  name.full: 100
-  description.short: 80
-  description.full: 4000
-  agentConnectors.0.displayName: 128
-
-https_fields:
-  - developer.websiteUrl
-  - developer.privacyUrl
-  - developer.termsOfUseUrl
-  - agentConnectors.0.toolSource.remoteMcpServer.mcpServerUrl
-
-# The first mention of term in each field must be the full phrase.
-first_mention:
+# Every mention of term in each manifest field must be part of the full phrase
+# (a field without the term passes).
+every_mention:
   term: Copilot
   phrase: Microsoft Copilot
   fields:

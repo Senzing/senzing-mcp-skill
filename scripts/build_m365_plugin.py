@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Build the Microsoft 365 / Microsoft Copilot app package for this skill.
 
-Reads the package and limits YAML files, validates them against the Teams
-app manifest and Microsoft 365 certification rules, fetches the MCP server's
-live tools/list (or reads a saved JSON-RPC reply) for the connector's tool
-description file, and writes the package plus a deterministic ZIP.
+Reads the package, declarative agent and limits YAML files and writes a Teams
+app whose declarative agent carries the skill and one action: a plugin with a
+function per MCP tool, run by the remote MCP server. The MCP server's live
+tools/list (or a saved JSON-RPC reply) becomes the tool description file and
+the plugin functions. Every document is validated against the Teams app
+manifest, declarative agent and plugin rules in the limits file before a
+deterministic ZIP is written.
 
 Usage:
-    build_m365_plugin.py --package P.yaml --limits LIM.yaml --repo-root DIR --out-dir OUT [--tools-file F.json]
+    build_m365_plugin.py --package P.yaml --agent A.yaml --limits LIM.yaml --repo-root DIR --out-dir OUT [--tools-file F.json]
 """
 
 from __future__ import annotations
@@ -31,10 +34,11 @@ from build_openai_plugin import (
     make_zip,
     png_size,
     read_frontmatter,
-    skill_version,
     write_json,
 )
 
+SKILLS_DIR = "skills"
+SKILL_FILE = "SKILL.md"
 RGBA_8BIT = (8, 6, 0)  # bit depth, color type (RGBA), interlace (none)
 RGBA_BYTES = 4
 WHITE = b"\xff\xff\xff"
@@ -58,12 +62,11 @@ def full_description(package: dict) -> str:
         raise BuildError([f"description.full uses {{{error.args[0]}}}, which is not under links"]) from error
 
 
-def build_manifest(package: dict, limits: dict, version: str) -> dict:
-    connector = package["connector"]
-    skill_name = Path(package["skill_dir"]).name
+def build_manifest(package: dict, agent: dict, limits: dict, version: str) -> dict:
+    rules = limits["manifest"]
     return {
-        "$schema": limits["schema"],
-        "manifestVersion": limits["manifest_version"],
+        "$schema": rules["schema"],
+        "manifestVersion": rules["version"],
         "version": version,
         "id": package["app_id"],
         "developer": package["developer"],
@@ -71,21 +74,58 @@ def build_manifest(package: dict, limits: dict, version: str) -> dict:
         "description": {"short": package["description"]["short"], "full": full_description(package)},
         "icons": {kind: Path(source).name for kind, source in package["icons"].items()},
         "accentColor": package["accent_color"],
-        "agentConnectors": [
+        "copilotAgents": {"declarativeAgents": [{"id": agent["id"], "file": limits["agent"]["file"]}]},
+    }
+
+
+def build_agent(package: dict, agent: dict, limits: dict) -> dict:
+    """Return declarativeAgent.json: instructions, starters, the plugin action and the skill."""
+    rules = limits["agent"]
+    return {
+        "$schema": rules["schema"],
+        "version": rules["version"],
+        "name": agent["name"],
+        "description": agent["description"],
+        "instructions": agent["instructions"],
+        "behavior_overrides": {"special_instructions": {"discourage_model_knowledge": agent["discourage_model_knowledge"]}},
+        "conversation_starters": agent["conversation_starters"],
+        "actions": [{"id": agent["plugin"]["namespace"], "file": limits["plugin"]["file"]}],
+        "agent_skills": [{"folder": f"{SKILLS_DIR}/{Path(package['skill_dir']).name}"}],
+    }
+
+
+def agent_tools(agent: dict, tools: dict) -> dict:
+    """Return the tool description without the tools the agent excludes."""
+    excluded = set(agent["excluded_tools"])
+    return {"tools": [tool for tool in tools["tools"] if tool["name"] not in excluded]}
+
+
+def build_function(agent: dict, tool: dict) -> dict:
+    settings = agent["function_capabilities"]
+    chosen = settings["overrides"].get(tool["name"], settings["default"])
+    capabilities = {"security_info": {"data_handling": chosen["data_handling"]}}
+    if "confirmation" in chosen:
+        capabilities["confirmation"] = {"type": chosen["confirmation"]}
+    description = agent["function_descriptions"].get(tool["name"], tool["description"])
+    return {"name": tool["name"], "description": description, "capabilities": capabilities}
+
+
+def build_plugin(package: dict, agent: dict, limits: dict, tools: dict) -> dict:
+    """Return ai-plugin.json: one function per (included) MCP tool, all run by the remote MCP server."""
+    rules, server = limits["plugin"], package["mcp_server"]
+    return {
+        "$schema": rules["schema"],
+        "schema_version": rules["version"],
+        **agent["plugin"],
+        "functions": [build_function(agent, tool) for tool in tools["tools"]],
+        "runtimes": [
             {
-                "id": connector["id"],
-                "displayName": connector["displayName"],
-                "description": connector["description"],
-                "toolSource": {
-                    "remoteMcpServer": {
-                        "mcpServerUrl": connector["url"],
-                        "mcpToolDescription": {"file": connector["tool_file"]},
-                        "authorization": {"type": "None"},
-                    }
-                },
+                "type": "RemoteMCPServer",
+                "auth": {"type": "None"},
+                "run_for_functions": [tool["name"] for tool in tools["tools"]],
+                "spec": {"url": server["url"], "mcp_tool_description": {"file": server["tool_file"]}},
             }
         ],
-        "agentSkills": [{"folder": f"./skills/{skill_name}"}],
     }
 
 
@@ -101,23 +141,88 @@ def check_identity(manifest: dict, limits: dict) -> list[str]:
     ]
 
 
-def check_text(manifest: dict, limits: dict) -> list[str]:
+def check_fields(document: dict, rules: dict) -> list[str]:
+    """Apply a limits.yaml document section's max_chars, min_items, max_items and https_fields."""
+    label = rules["file"]
     problems = [
-        f"{field} is {len(lookup(manifest, field))} chars (max {maximum})"
-        for field, maximum in limits["max_chars"].items()
-        if len(lookup(manifest, field)) > maximum
+        f"{label}: {field} is {len(lookup(document, field))} chars (max {maximum})"
+        for field, maximum in rules.get("max_chars", {}).items()
+        if len(lookup(document, field)) > maximum
     ]
     problems += [
-        f"{field} must be an https:// URL"
-        for field in limits["https_fields"]
-        if not lookup(manifest, field).startswith("https://")
+        f"{label}: {field} has {len(lookup(document, field))} items (min {minimum})"
+        for field, minimum in rules.get("min_items", {}).items()
+        if len(lookup(document, field)) < minimum
     ]
-    rule = limits["first_mention"]
-    for field in rule["fields"]:
-        text = lookup(manifest, field)
-        first = text.find(rule["term"])
-        if text.find(rule["phrase"]) != first - rule["phrase"].index(rule["term"]):
-            problems.append(f"{field}: the first mention of {rule['term']!r} must be {rule['phrase']!r}")
+    problems += [
+        f"{label}: {field} has {len(lookup(document, field))} items (max {maximum})"
+        for field, maximum in rules.get("max_items", {}).items()
+        if len(lookup(document, field)) > maximum
+    ]
+    problems += [
+        f"{label}: {field} must be an https:// URL"
+        for field in rules.get("https_fields", [])
+        if not lookup(document, field).startswith("https://")
+    ]
+    return problems
+
+
+def check_mentions(manifest: dict, limits: dict) -> list[str]:
+    """Every mention of the term must be part of the full phrase (no mention is fine)."""
+    rule = limits["every_mention"]
+    return [
+        f"{field}: every mention of {rule['term']!r} must be {rule['phrase']!r}"
+        for field in rule["fields"]
+        if lookup(manifest, field).count(rule["term"]) != lookup(manifest, field).count(rule["phrase"])
+    ]
+
+
+def check_skill_folders(declarative: dict, limits: dict) -> list[str]:
+    rules = limits["agent"]
+    return [
+        f"{rules['file']}: agent_skills folder {skill['folder']!r} must match {rules['skill_folder_pattern']}"
+        for skill in declarative["agent_skills"]
+        if not re.fullmatch(rules["skill_folder_pattern"], skill["folder"])
+    ]
+
+
+def check_skill_files(declarative: dict, limits: dict, package_dir: Path) -> list[str]:
+    return [
+        f"{limits['agent']['file']}: agent_skills folder {skill['folder']!r} has no {SKILL_FILE} in the package"
+        for skill in declarative["agent_skills"]
+        if not (package_dir / skill["folder"] / SKILL_FILE).is_file()
+    ]
+
+
+def check_tool_references(agent: dict, tools: dict, included: dict) -> list[str]:
+    """Every tool name in the agent YAML must be a tool the MCP server lists."""
+    every = {tool["name"] for tool in tools["tools"]}
+    kept = {tool["name"] for tool in included["tools"]}
+    problems = [f"excluded_tools: {name} is not an MCP tool" for name in agent["excluded_tools"] if name not in every]
+    for section, names in (
+        ("function_capabilities.overrides", agent["function_capabilities"]["overrides"]),
+        ("function_descriptions", agent["function_descriptions"]),
+    ):
+        problems += [f"{section}.{name} is not an included MCP tool" for name in names if name not in kept]
+    return problems
+
+
+def check_plugin(plugin: dict, limits: dict) -> list[str]:
+    rules = limits["plugin"]
+    label, names = rules["file"], [function["name"] for function in plugin["functions"]]
+    problems = check_fields(plugin, rules)
+    for index, runtime in enumerate(plugin["runtimes"]):
+        missing = [name for name in names if name not in runtime["run_for_functions"]]
+        if missing:
+            problems.append(
+                f"{label}: runtimes.{index}.run_for_functions must list every MCP tool (missing {', '.join(missing)})"
+            )
+    problems += [
+        f"{label}: {function['name']} confirmation type {kind!r} must be one of {', '.join(rules['confirmation_types'])}"
+        for function in plugin["functions"]
+        if (kind := function["capabilities"].get("confirmation", {}).get("type")) is not None
+        and kind not in rules["confirmation_types"]
+    ]
     return problems
 
 
@@ -193,15 +298,22 @@ def check_icons(package: dict, limits: dict, repo_root: Path) -> list[str]:
     return problems
 
 
-def validate(manifest: dict, package: dict, limits: dict, repo_root: Path, frontmatter: dict) -> None:
-    problems = (
-        check_identity(manifest, limits)
-        + check_skill(frontmatter, repo_root / package["skill_dir"])
-        + check_text(manifest, limits)
-        + check_icons(package, limits, repo_root)
-    )
+def raise_problems(problems: list[str]) -> None:
     if problems:
         raise BuildError(problems)
+
+
+def validate(manifest: dict, declarative: dict, package: dict, limits: dict, repo_root: Path, frontmatter: dict) -> None:
+    """Check everything that does not need the MCP tools list."""
+    raise_problems(
+        check_identity(manifest, limits)
+        + check_skill(frontmatter, repo_root / package["skill_dir"])
+        + check_fields(manifest, limits["manifest"])
+        + check_mentions(manifest, limits)
+        + check_icons(package, limits, repo_root)
+        + check_fields(declarative, limits["agent"])
+        + check_skill_folders(declarative, limits)
+    )
 
 
 # --- MCP tools/list ----------------------------------------------------------
@@ -256,47 +368,56 @@ def tool_description(reply: dict) -> dict:
 # --- package -----------------------------------------------------------------
 
 
-def write_package(package: dict, limits: dict, repo_root: Path, package_dir: Path, manifest: dict, tools: dict) -> None:
+def write_package(package: dict, repo_root: Path, package_dir: Path, documents: dict[str, dict], tools: dict) -> None:
     if package_dir.exists():
         shutil.rmtree(package_dir)
     skill_src = repo_root / package["skill_dir"]
-    shutil.copytree(skill_src, package_dir / "skills" / skill_src.name, ignore=shutil.ignore_patterns(".*"))
+    shutil.copytree(skill_src, package_dir / SKILLS_DIR / skill_src.name, ignore=shutil.ignore_patterns(".*"))
     for source in package["icons"].values():
         shutil.copyfile(repo_root / source, package_dir / Path(source).name)
-    tool_file = package_dir / package["connector"]["tool_file"]
+    tool_file = package_dir / package["mcp_server"]["tool_file"]
     tool_file.parent.mkdir(parents=True, exist_ok=True)
     write_json(tool_file, tools)
-    write_json(package_dir / limits["manifest_file"], manifest)
+    for name, document in documents.items():
+        write_json(package_dir / name, document)
 
 
 def load_tools(package: dict, limits: dict, version: str, tools_file: Path | None) -> dict:
     if tools_file is not None:
         return tool_description(json.loads(tools_file.read_text(encoding="utf-8")))
     client = {"name": package["package_name"], "version": version}
-    return tool_description(fetch_tools(package["connector"]["url"], limits["mcp_protocol_version"], client))
+    return tool_description(fetch_tools(package["mcp_server"]["url"], limits["mcp_protocol_version"], client))
 
 
-def build(package_path: Path, limits_path: Path, repo_root: Path, out_dir: Path, tools_file: Path | None = None) -> Path:
-    package = load_yaml(package_path)
-    limits = load_yaml(limits_path)
-    frontmatter = read_frontmatter(repo_root / package["skill_dir"] / "SKILL.md")
-    version = skill_version(frontmatter)
-    manifest = build_manifest(package, limits, version)
-    validate(manifest, package, limits, repo_root, frontmatter)
-    tools = load_tools(package, limits, version, tools_file)
+def build(
+    package_path: Path, agent_path: Path, limits_path: Path, repo_root: Path, out_dir: Path, tools_file: Path | None = None
+) -> Path:
+    package, agent, limits = load_yaml(package_path), load_yaml(agent_path), load_yaml(limits_path)
+    frontmatter = read_frontmatter(repo_root / package["skill_dir"] / SKILL_FILE)
+    version = package["app_version"]
+    manifest = build_manifest(package, agent, limits, version)
+    declarative = build_agent(package, agent, limits)
+    validate(manifest, declarative, package, limits, repo_root, frontmatter)
+    every_tool = load_tools(package, limits, version, tools_file)
+    tools = agent_tools(agent, every_tool)
+    plugin = build_plugin(package, agent, limits, tools)
+    raise_problems(check_tool_references(agent, every_tool, tools) + check_plugin(plugin, limits))
+    documents = {limits["manifest"]["file"]: manifest, limits["agent"]["file"]: declarative, limits["plugin"]["file"]: plugin}
     name = package["package_name"]
     out_dir.mkdir(parents=True, exist_ok=True)
     package_dir = out_dir / name
-    write_package(package, limits, repo_root, package_dir, manifest, tools)
+    write_package(package, repo_root, package_dir, documents, tools)
+    raise_problems(check_skill_files(declarative, limits, package_dir))
     zip_path = out_dir / f"{name}-{version}.zip"
-    make_zip(package_dir, zip_path)
+    make_zip(package_dir, zip_path, directories=True)
     return zip_path
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--package", type=Path, required=True, help="package YAML")
-    parser.add_argument("--limits", type=Path, required=True, help="manifest and certification limits YAML")
+    parser.add_argument("--agent", type=Path, required=True, help="declarative agent YAML")
+    parser.add_argument("--limits", type=Path, required=True, help="manifest, agent and plugin limits YAML")
     parser.add_argument("--repo-root", type=Path, required=True, help="repository root")
     parser.add_argument("--out-dir", type=Path, required=True, help="output directory")
     parser.add_argument("--tools-file", type=Path, help="saved tools/list JSON-RPC reply (default: fetch it live)")
@@ -306,7 +427,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
-        zip_path = build(args.package, args.limits, args.repo_root, args.out_dir, args.tools_file)
+        zip_path = build(args.package, args.agent, args.limits, args.repo_root, args.out_dir, args.tools_file)
     except BuildError as error:
         for problem in error.problems:
             print(f"error: {problem}", file=sys.stderr)
