@@ -62,8 +62,28 @@ def full_description(package: dict) -> str:
         raise BuildError([f"description.full uses {{{error.args[0]}}}, which is not under links"]) from error
 
 
+def build_connector(package: dict) -> dict:
+    """Return the agentConnectors entry: the Senzing MCP server with every tool."""
+    server = package["mcp_server"]
+    connector = server["connector"]
+    return {
+        "id": connector["id"],
+        "displayName": connector["displayName"],
+        "description": connector["description"],
+        "toolSource": {
+            "remoteMcpServer": {
+                "mcpServerUrl": server["url"],
+                "mcpToolDescription": {"file": server["tool_file"]},
+                "authorization": {"type": "None"},
+            }
+        },
+    }
+
+
 def build_manifest(package: dict, agent: dict, limits: dict, version: str) -> dict:
+    """Return manifest.json: the MCP connector and the skill, plus the declarative agent."""
     rules = limits["manifest"]
+    skill_folder = f"{rules['skill_folder_prefix']}/{Path(package['skill_dir']).name}"
     return {
         "$schema": rules["schema"],
         "manifestVersion": rules["version"],
@@ -74,6 +94,8 @@ def build_manifest(package: dict, agent: dict, limits: dict, version: str) -> di
         "description": {"short": package["description"]["short"], "full": full_description(package)},
         "icons": {kind: Path(source).name for kind, source in package["icons"].items()},
         "accentColor": package["accent_color"],
+        "agentConnectors": [build_connector(package)],
+        "agentSkills": [{"folder": skill_folder}],
         "copilotAgents": {"declarativeAgents": [{"id": agent["id"], "file": limits["agent"]["file"]}]},
     }
 
@@ -123,7 +145,7 @@ def build_plugin(package: dict, agent: dict, limits: dict, tools: dict) -> dict:
                 "type": "RemoteMCPServer",
                 "auth": {"type": "None"},
                 "run_for_functions": [tool["name"] for tool in tools["tools"]],
-                "spec": {"url": server["url"], "mcp_tool_description": {"file": server["tool_file"]}},
+                "spec": {"url": server["url"], "mcp_tool_description": {"file": server["agent_tool_file"]}},
             }
         ],
     }
@@ -368,16 +390,19 @@ def tool_description(reply: dict) -> dict:
 # --- package -----------------------------------------------------------------
 
 
-def write_package(package: dict, repo_root: Path, package_dir: Path, documents: dict[str, dict], tools: dict) -> None:
+def write_package(
+    package: dict, repo_root: Path, package_dir: Path, documents: dict[str, dict], tool_files: dict[str, dict]
+) -> None:
     if package_dir.exists():
         shutil.rmtree(package_dir)
     skill_src = repo_root / package["skill_dir"]
     shutil.copytree(skill_src, package_dir / SKILLS_DIR / skill_src.name, ignore=shutil.ignore_patterns(".*"))
     for source in package["icons"].values():
         shutil.copyfile(repo_root / source, package_dir / Path(source).name)
-    tool_file = package_dir / package["mcp_server"]["tool_file"]
-    tool_file.parent.mkdir(parents=True, exist_ok=True)
-    write_json(tool_file, tools)
+    for name, tools in tool_files.items():
+        tool_file = package_dir / name
+        tool_file.parent.mkdir(parents=True, exist_ok=True)
+        write_json(tool_file, tools)
     for name, document in documents.items():
         write_json(package_dir / name, document)
 
@@ -406,7 +431,9 @@ def build(
     name = package["package_name"]
     out_dir.mkdir(parents=True, exist_ok=True)
     package_dir = out_dir / name
-    write_package(package, repo_root, package_dir, documents, tools)
+    server = package["mcp_server"]
+    tool_files = {server["tool_file"]: every_tool, server["agent_tool_file"]: tools}
+    write_package(package, repo_root, package_dir, documents, tool_files)
     raise_problems(check_skill_files(declarative, limits, package_dir))
     zip_path = out_dir / f"{name}-{version}.zip"
     make_zip(package_dir, zip_path, directories=True)

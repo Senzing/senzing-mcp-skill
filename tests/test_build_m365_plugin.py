@@ -118,7 +118,8 @@ def write_png(path: Path, rows: list[list[tuple[int, int, int, int]]]) -> Path:
 def test_zip_layout(built: Path, package: dict, limits: dict) -> None:
     names = zipfile.ZipFile(built).namelist()
     documents = {limits[kind]["file"] for kind in ("manifest", "agent", "plugin")}
-    assert documents | {"color.png", "outline.png", package["mcp_server"]["tool_file"]} <= set(names)
+    server = package["mcp_server"]
+    assert documents | {"color.png", "outline.png", server["tool_file"], server["agent_tool_file"]} <= set(names)
     assert "skills/senzing-entity-resolution/SKILL.md" in names
 
 
@@ -140,9 +141,25 @@ def test_version_is_app_version(built: Path, package: dict) -> None:
     assert built.name == f"{package['package_name']}-{version}.zip"
 
 
+def test_manifest_has_mcp_connector_with_every_tool(built: Path, package: dict, limits: dict) -> None:
+    manifest, names = manifest_of(built), zipfile.ZipFile(built).namelist()
+    server = package["mcp_server"]
+    [connector] = manifest["agentConnectors"]
+    assert connector["id"] == server["connector"]["id"]
+    assert connector["toolSource"]["remoteMcpServer"] == {
+        "mcpServerUrl": server["url"],
+        "mcpToolDescription": {"file": server["tool_file"]},
+        "authorization": {"type": "None"},
+    }
+    connector_tools = json.loads(zipfile.ZipFile(built).read(server["tool_file"]))["tools"]
+    assert "analyze_record" in [tool["name"] for tool in connector_tools]
+    [skill] = manifest["agentSkills"]
+    assert skill == {"folder": f"{limits['manifest']['skill_folder_prefix']}/senzing-entity-resolution"}
+    assert f"{skill['folder'].removeprefix('./')}/SKILL.md" in names
+
+
 def test_manifest_declares_one_agent(built: Path, limits: dict) -> None:
     manifest = manifest_of(built)
-    assert "agentConnectors" not in manifest and "agentSkills" not in manifest
     assert manifest["copilotAgents"] == {"declarativeAgents": [{"id": "senzing", "file": limits["agent"]["file"]}]}
     assert set(manifest["icons"].values()) <= set(zipfile.ZipFile(built).namelist())
 
@@ -165,7 +182,7 @@ def test_instructions_route_to_tools(built: Path) -> None:
 
 def test_plugin_functions_match_tool_file(built: Path, package: dict, agent: dict) -> None:
     plugin = member(built, "plugin")
-    tools = json.loads(zipfile.ZipFile(built).read(package["mcp_server"]["tool_file"]))["tools"]
+    tools = json.loads(zipfile.ZipFile(built).read(package["mcp_server"]["agent_tool_file"]))["tools"]
     names = [tool["name"] for tool in tools]
     assert names and [function["name"] for function in plugin["functions"]] == names
     assert set(agent["excluded_tools"]).isdisjoint(names)
@@ -173,7 +190,7 @@ def test_plugin_functions_match_tool_file(built: Path, package: dict, agent: dic
     assert runtime["type"] == "RemoteMCPServer" and runtime["auth"] == {"type": "None"}
     assert runtime["run_for_functions"] == names
     server = package["mcp_server"]
-    assert runtime["spec"] == {"url": server["url"], "mcp_tool_description": {"file": server["tool_file"]}}
+    assert runtime["spec"] == {"url": server["url"], "mcp_tool_description": {"file": server["agent_tool_file"]}}
     assert all(set(tool) == {"name", "description", "inputSchema"} for tool in tools)
 
 

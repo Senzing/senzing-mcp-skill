@@ -18,6 +18,7 @@ manifest:
     name.full: 100
     description.short: 80
     description.full: 4000
+    agentConnectors.0.displayName: 128
   # Teams supports one declarative agent per app.
   max_items:
     copilotAgents.declarativeAgents: 1
@@ -25,6 +26,9 @@ manifest:
     - developer.websiteUrl
     - developer.privacyUrl
     - developer.termsOfUseUrl
+    - agentConnectors.0.toolSource.remoteMcpServer.mcpServerUrl
+  # The app-level skill folder, as sideloaded with the connector in 1.47.0.
+  skill_folder_prefix: ./skills
 
 agent:
   file: declarativeAgent.json
