@@ -3,8 +3,9 @@ name: Plugin packages
 # Validates and builds the plugin packages from the skill:
 # - OpenAI (ChatGPT and Codex directory) from openai-plugin/listing.yaml
 # - Microsoft 365 / Microsoft Copilot from m365-plugin/package.yaml and
-#   agent.yaml: a declarative agent (manifest.json, declarativeAgent.json,
-#   ai-plugin.json) whose MCP tool description is fetched from the live server
+#   agent.yaml: the Senzing MCP connector, the skill and a declarative agent
+#   (manifest.json, declarativeAgent.json, ai-plugin.json); the MCP tool
+#   descriptions are fetched from the live server
 # The ZIPs are workflow artifacts on every run. On a push to main, each ZIP is
 # attached to GitHub release v<skill version> (created if it does not exist
 # yet); the Microsoft 365 ZIP is named for its own app_version, so a new

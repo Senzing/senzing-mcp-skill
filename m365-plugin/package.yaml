@@ -12,7 +12,7 @@ skill_dir: senzing-entity-resolution
 # The app version (manifest.json version, MAJOR.MINOR.PATCH). It is separate
 # from the skill's metadata.version: Teams and Partner Center need a higher
 # version for every package update, so bump it whenever the package changes.
-app_version: 1.47.4
+app_version: 1.47.6
 
 # The ZIP is <package_name>-<app_version>.zip.
 package_name: senzing-m365-plugin
@@ -69,9 +69,19 @@ description:
     - "Help and documentation: {help}"
     - "Contact us: {contact} or {support_email}"
 
-# Anonymous remote MCP server behind the agent's action (ai-plugin.json
-# runtime). Its live tools/list becomes tool_file and one plugin function per
-# tool; the agent itself is in agent.yaml.
+# The anonymous remote Senzing MCP server. The package exposes it twice, the
+# same way the OpenAI plugin pairs mcp.json with the skill:
+#   connector: manifest agentConnectors, with every tool from the live
+#     tools/list (tool_file), next to the skill in agentSkills;
+#   the agent's action: ai-plugin.json runtime, with the agent's tools
+#     (agent_tool_file; agent.yaml excludes some) and one function per tool.
 mcp_server:
   url: https://mcp.senzing.com/mcp
   tool_file: tools/senzing-tools.json
+  agent_tool_file: tools/senzing-agent-tools.json
+  connector:
+    id: senzing
+    displayName: Senzing MCP server
+    description: >-
+      Senzing documentation, entity specification, SDK signatures and examples,
+      data mapping workflows, error explanations and sample data.

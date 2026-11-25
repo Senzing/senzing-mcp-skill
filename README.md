@@ -114,14 +114,18 @@ The demo video, reviewer details and country availability are entered there.
 ## Microsoft 365 Copilot package
 
 [`scripts/build_m365_plugin.py`](scripts/build_m365_plugin.py) builds the
-Microsoft 365 / Microsoft Copilot app package as a declarative agent:
+Microsoft 365 / Microsoft Copilot app package. Like the OpenAI plugin (MCP
+server plus this skill), it ships the Senzing MCP server as a connector with
+every tool and this skill, and adds a declarative agent that routes Senzing
+questions to those tools:
 
 | File | Contents |
 | --- | --- |
-| `manifest.json` | Teams app manifest (v1.28) that declares one declarative agent |
+| `manifest.json` | Teams app manifest (v1.28): the MCP connector (`agentConnectors`), this skill (`agentSkills`) and one declarative agent |
 | `declarativeAgent.json` | The agent (v1.9): instructions, conversation starters, one action and this skill under `skills/` |
 | `ai-plugin.json` | The action (plugin manifest v2.4): one function per MCP tool, run by the anonymous remote MCP server `https://mcp.senzing.com/mcp` |
-| `tools/senzing-tools.json` | The MCP tool description, fetched from the live server's `tools/list` |
+| `tools/senzing-tools.json` | The connector's MCP tool description: every tool from the live server's `tools/list` |
+| `tools/senzing-agent-tools.json` | The agent action's tool description: the same tools minus `excluded_tools` |
 | `color.png`, `outline.png` | App icons |
 
 The data lives in YAML: app id, version, names, links and descriptions in
@@ -133,7 +137,8 @@ the schemas and Microsoft store validation rules in
 those rules before writing a ZIP: every mention of Copilot is "Microsoft
 Copilot", the outline icon is white on transparent, the instructions fit in
 8,000 characters, `run_for_functions` lists every included MCP tool, each skill
-folder is `skills/<name>` (no leading `./`) and holds `SKILL.md`, confirmations
+folder in the agent is `skills/<name>` (no leading `./`; the manifest's
+`agentSkills` uses `./skills/<name>`) and holds `SKILL.md`, confirmations
 are `AdaptiveCard` or absent, and every tool named in `agent.yaml` is one the
 server lists. The tests also validate the three JSON files against their
 published schemas.

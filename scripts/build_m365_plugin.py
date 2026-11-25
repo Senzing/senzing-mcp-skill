@@ -2,10 +2,11 @@
 """Build the Microsoft 365 / Microsoft Copilot app package for this skill.
 
 Reads the package, declarative agent and limits YAML files and writes a Teams
-app whose declarative agent carries the skill and one action: a plugin with a
-function per MCP tool, run by the remote MCP server. The MCP server's live
-tools/list (or a saved JSON-RPC reply) becomes the tool description file and
-the plugin functions. Every document is validated against the Teams app
+app with three capabilities: the remote MCP server as a connector with every
+tool, this skill, and a declarative agent whose action is a plugin with a
+function per MCP tool it keeps. The MCP server's live tools/list (or a saved
+JSON-RPC reply) becomes the connector's tool description file, and the agent's
+filtered copy becomes its action's tool description file and functions. Every document is validated against the Teams app
 manifest, declarative agent and plugin rules in the limits file before a
 deterministic ZIP is written.
 
@@ -45,10 +46,16 @@ WHITE = b"\xff\xff\xff"
 
 
 def lookup(document: dict, dotted: str):
-    """Return the value at a dotted path such as "name.short" or "items.0.id"."""
+    """Return the value at a dotted path such as "name.short" or "items.0.id", or "" if it is missing."""
     value = document
     for part in dotted.split("."):
-        value = value[int(part)] if isinstance(value, list) else value.get(part, "")
+        match value:
+            case list() if int(part) < len(value):
+                value = value[int(part)]
+            case dict() if part in value:
+                value = value[part]
+            case _:
+                return ""
     return value
 
 
@@ -62,8 +69,28 @@ def full_description(package: dict) -> str:
         raise BuildError([f"description.full uses {{{error.args[0]}}}, which is not under links"]) from error
 
 
+def build_connector(package: dict) -> dict:
+    """Return the agentConnectors entry: the Senzing MCP server with every tool."""
+    server = package["mcp_server"]
+    connector = server["connector"]
+    return {
+        "id": connector["id"],
+        "displayName": connector["displayName"],
+        "description": connector["description"],
+        "toolSource": {
+            "remoteMcpServer": {
+                "mcpServerUrl": server["url"],
+                "mcpToolDescription": {"file": server["tool_file"]},
+                "authorization": {"type": "None"},
+            }
+        },
+    }
+
+
 def build_manifest(package: dict, agent: dict, limits: dict, version: str) -> dict:
+    """Return manifest.json: the MCP connector and the skill, plus the declarative agent."""
     rules = limits["manifest"]
+    skill_folder = f"{rules['skill_folder_prefix']}/{Path(package['skill_dir']).name}"
     return {
         "$schema": rules["schema"],
         "manifestVersion": rules["version"],
@@ -74,6 +101,8 @@ def build_manifest(package: dict, agent: dict, limits: dict, version: str) -> di
         "description": {"short": package["description"]["short"], "full": full_description(package)},
         "icons": {kind: Path(source).name for kind, source in package["icons"].items()},
         "accentColor": package["accent_color"],
+        "agentConnectors": [build_connector(package)],
+        "agentSkills": [{"folder": skill_folder}],
         "copilotAgents": {"declarativeAgents": [{"id": agent["id"], "file": limits["agent"]["file"]}]},
     }
 
@@ -123,7 +152,7 @@ def build_plugin(package: dict, agent: dict, limits: dict, tools: dict) -> dict:
                 "type": "RemoteMCPServer",
                 "auth": {"type": "None"},
                 "run_for_functions": [tool["name"] for tool in tools["tools"]],
-                "spec": {"url": server["url"], "mcp_tool_description": {"file": server["tool_file"]}},
+                "spec": {"url": server["url"], "mcp_tool_description": {"file": server["agent_tool_file"]}},
             }
         ],
     }
@@ -359,7 +388,13 @@ def tool_description(reply: dict) -> dict:
     if result.get("nextCursor"):
         raise BuildError(["tools/list is paginated; only a single page is supported"])
     keys = ("name", "description", "inputSchema")
-    tools = [{key: tool[key] for key in keys} for tool in result.get("tools", []) if all(key in tool for key in keys)]
+    # MCP annotations (readOnlyHint and the like) mark which tools change state.
+    optional = ("annotations",)
+    tools = [
+        {key: tool[key] for key in keys + optional if key in tool}
+        for tool in result.get("tools", [])
+        if all(key in tool for key in keys)
+    ]
     if not tools or len(tools) != len(result["tools"]):
         raise BuildError([f"tools/list must return tools that all have {', '.join(keys)}"])
     return {"tools": tools}
@@ -368,16 +403,19 @@ def tool_description(reply: dict) -> dict:
 # --- package -----------------------------------------------------------------
 
 
-def write_package(package: dict, repo_root: Path, package_dir: Path, documents: dict[str, dict], tools: dict) -> None:
+def write_package(
+    package: dict, repo_root: Path, package_dir: Path, documents: dict[str, dict], tool_files: dict[str, dict]
+) -> None:
     if package_dir.exists():
         shutil.rmtree(package_dir)
     skill_src = repo_root / package["skill_dir"]
     shutil.copytree(skill_src, package_dir / SKILLS_DIR / skill_src.name, ignore=shutil.ignore_patterns(".*"))
     for source in package["icons"].values():
         shutil.copyfile(repo_root / source, package_dir / Path(source).name)
-    tool_file = package_dir / package["mcp_server"]["tool_file"]
-    tool_file.parent.mkdir(parents=True, exist_ok=True)
-    write_json(tool_file, tools)
+    for name, tools in tool_files.items():
+        tool_file = package_dir / name
+        tool_file.parent.mkdir(parents=True, exist_ok=True)
+        write_json(tool_file, tools)
     for name, document in documents.items():
         write_json(package_dir / name, document)
 
@@ -406,7 +444,11 @@ def build(
     name = package["package_name"]
     out_dir.mkdir(parents=True, exist_ok=True)
     package_dir = out_dir / name
-    write_package(package, repo_root, package_dir, documents, tools)
+    server = package["mcp_server"]
+    if server["tool_file"] == server["agent_tool_file"]:
+        raise BuildError(["mcp_server: tool_file (every tool, for the connector) and agent_tool_file must differ"])
+    tool_files = {server["tool_file"]: every_tool, server["agent_tool_file"]: tools}
+    write_package(package, repo_root, package_dir, documents, tool_files)
     raise_problems(check_skill_files(declarative, limits, package_dir))
     zip_path = out_dir / f"{name}-{version}.zip"
     make_zip(package_dir, zip_path, directories=True)

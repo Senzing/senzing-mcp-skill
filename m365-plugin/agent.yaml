@@ -80,8 +80,8 @@ plugin:
   legal_info_url: https://senzing.com/terms-of-use
   contact_email: support@senzing.com
 
-# MCP tools left out of the plugin functions, run_for_functions and the tool
-# description file. analyze_record needs a local workspace_dir and returns a
+# MCP tools left out of the agent's plugin functions, run_for_functions and its
+# tool description file (agent_tool_file). The connector keeps every tool. analyze_record needs a local workspace_dir and returns a
 # script to run locally, which Copilot cannot do.
 excluded_tools:
   - analyze_record

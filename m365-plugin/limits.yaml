@@ -18,6 +18,15 @@ manifest:
     name.full: 100
     description.short: 80
     description.full: 4000
+    agentConnectors.0.displayName: 128
+  # The app must ship the Senzing MCP connector and the skill (as the OpenAI
+  # plugin ships mcp.json and the skill) as well as the agent. 1.47.4 shipped
+  # the agent alone and Microsoft validation flagged the missing connector;
+  # these minimums make the builder refuse such a package.
+  min_items:
+    agentConnectors: 1
+    agentSkills: 1
+    copilotAgents.declarativeAgents: 1
   # Teams supports one declarative agent per app.
   max_items:
     copilotAgents.declarativeAgents: 1
@@ -25,6 +34,9 @@ manifest:
     - developer.websiteUrl
     - developer.privacyUrl
     - developer.termsOfUseUrl
+    - agentConnectors.0.toolSource.remoteMcpServer.mcpServerUrl
+  # The app-level skill folder, as sideloaded with the connector in 1.47.0.
+  skill_folder_prefix: ./skills
 
 agent:
   file: declarativeAgent.json
