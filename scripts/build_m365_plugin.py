@@ -2,10 +2,11 @@
 """Build the Microsoft 365 / Microsoft Copilot app package for this skill.
 
 Reads the package, declarative agent and limits YAML files and writes a Teams
-app whose declarative agent carries the skill and one action: a plugin with a
-function per MCP tool, run by the remote MCP server. The MCP server's live
-tools/list (or a saved JSON-RPC reply) becomes the tool description file and
-the plugin functions. Every document is validated against the Teams app
+app with three capabilities: the remote MCP server as a connector with every
+tool, this skill, and a declarative agent whose action is a plugin with a
+function per MCP tool it keeps. The MCP server's live tools/list (or a saved
+JSON-RPC reply) becomes the connector's tool description file, and the agent's
+filtered copy becomes its action's tool description file and functions. Every document is validated against the Teams app
 manifest, declarative agent and plugin rules in the limits file before a
 deterministic ZIP is written.
 
@@ -387,7 +388,13 @@ def tool_description(reply: dict) -> dict:
     if result.get("nextCursor"):
         raise BuildError(["tools/list is paginated; only a single page is supported"])
     keys = ("name", "description", "inputSchema")
-    tools = [{key: tool[key] for key in keys} for tool in result.get("tools", []) if all(key in tool for key in keys)]
+    # MCP annotations (readOnlyHint and the like) mark which tools change state.
+    optional = ("annotations",)
+    tools = [
+        {key: tool[key] for key in keys + optional if key in tool}
+        for tool in result.get("tools", [])
+        if all(key in tool for key in keys)
+    ]
     if not tools or len(tools) != len(result["tools"]):
         raise BuildError([f"tools/list must return tools that all have {', '.join(keys)}"])
     return {"tools": tools}
@@ -438,6 +445,8 @@ def build(
     out_dir.mkdir(parents=True, exist_ok=True)
     package_dir = out_dir / name
     server = package["mcp_server"]
+    if server["tool_file"] == server["agent_tool_file"]:
+        raise BuildError(["mcp_server: tool_file (every tool, for the connector) and agent_tool_file must differ"])
     tool_files = {server["tool_file"]: every_tool, server["agent_tool_file"]: tools}
     write_package(package, repo_root, package_dir, documents, tool_files)
     raise_problems(check_skill_files(declarative, limits, package_dir))

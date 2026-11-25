@@ -141,7 +141,7 @@ def test_version_is_app_version(built: Path, package: dict) -> None:
     assert built.name == f"{package['package_name']}-{version}.zip"
 
 
-def test_manifest_has_mcp_connector_with_every_tool(built: Path, package: dict, limits: dict) -> None:
+def test_manifest_has_mcp_connector_with_every_tool(built: Path, package: dict, limits: dict, every_tool: dict) -> None:
     manifest, names = manifest_of(built), zipfile.ZipFile(built).namelist()
     server = package["mcp_server"]
     [connector] = manifest["agentConnectors"]
@@ -152,6 +152,7 @@ def test_manifest_has_mcp_connector_with_every_tool(built: Path, package: dict, 
         "authorization": {"type": "None"},
     }
     connector_tools = json.loads(zipfile.ZipFile(built).read(server["tool_file"]))["tools"]
+    assert connector_tools == every_tool["tools"]
     assert "analyze_record" in [tool["name"] for tool in connector_tools]
     [skill] = manifest["agentSkills"]
     assert skill == {"folder": f"{limits['manifest']['skill_folder_prefix']}/senzing-entity-resolution"}
@@ -191,7 +192,10 @@ def test_plugin_functions_match_tool_file(built: Path, package: dict, agent: dic
     assert runtime["run_for_functions"] == names
     server = package["mcp_server"]
     assert runtime["spec"] == {"url": server["url"], "mcp_tool_description": {"file": server["agent_tool_file"]}}
-    assert all(set(tool) == {"name", "description", "inputSchema"} for tool in tools)
+    assert all(
+        {"name", "description", "inputSchema"} <= set(tool) <= {"name", "description", "inputSchema", "annotations"}
+        for tool in tools
+    )
 
 
 def test_function_overrides(built: Path, agent: dict) -> None:
@@ -404,6 +408,13 @@ def test_build_reports_plugin_problems(tmp_path: Path, tools_file: Path, agent: 
     assert not (tmp_path / "out").exists()
 
 
+def test_build_refuses_one_tool_file_for_connector_and_agent(tmp_path: Path, tools_file: Path, package: dict) -> None:
+    package["mcp_server"]["agent_tool_file"] = package["mcp_server"]["tool_file"]
+    bad = write(tmp_path / "package.yaml", yaml.safe_dump(package, allow_unicode=True))
+    with pytest.raises(bmp.BuildError, match="tool_file .* and agent_tool_file must differ"):
+        bmp.build(bad, AGENT, LIMITS, REPO_ROOT, tmp_path / "out", tools_file)
+
+
 def test_icon_wrong_size(package: dict, limits: dict) -> None:
     package["icons"]["color"], package["icons"]["outline"] = package["icons"]["outline"], package["icons"]["color"]
     problems = problems_for(package, limits)
@@ -466,6 +477,13 @@ def test_tool_description_keeps_manifest_fields() -> None:
     assert bmp.tool_description(reply) == {"tools": [{k: TOOL[k] for k in ("name", "description", "inputSchema")}]}
 
 
+def test_tool_description_keeps_annotations() -> None:
+    tool = TOOL | {"annotations": {"readOnlyHint": False}}
+    reply = {"jsonrpc": "2.0", "id": 2, "result": {"tools": [tool]}}
+    [kept] = bmp.tool_description(reply)["tools"]
+    assert kept["annotations"] == {"readOnlyHint": False} and "title" not in kept
+
+
 @pytest.mark.parametrize(
     ("reply", "message"),
     [
@@ -493,6 +511,8 @@ def test_lookup() -> None:
     document = {"a": [{"b": "x"}]}
     assert bmp.lookup(document, "a.0.b") == "x"
     assert bmp.lookup(document, "missing") == ""
+    assert bmp.lookup(document, "a.1.b") == ""
+    assert bmp.lookup(document, "a.0.b.c") == ""
 
 
 # --- command line -----------------------------------------------------------
