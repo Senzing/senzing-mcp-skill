@@ -332,6 +332,15 @@ def test_agent_skill_and_agent_counts(package: dict, agent: dict, limits: dict) 
     ]
 
 
+@pytest.mark.parametrize("capability", ["agentConnectors", "agentSkills", "copilotAgents"])
+def test_manifest_must_keep_connector_skill_and_agent(package: dict, agent: dict, limits: dict, capability: str) -> None:
+    manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
+    assert bmp.check_fields(manifest, limits["manifest"]) == []
+    del manifest[capability]
+    field = "copilotAgents.declarativeAgents" if capability == "copilotAgents" else capability
+    assert f"manifest.json: {field} has 0 items (min 1)" in bmp.check_fields(manifest, limits["manifest"])
+
+
 @pytest.mark.parametrize("folder", ["./skills/senzing-entity-resolution", "senzing-entity-resolution", "skills/a/b"])
 def test_skill_folder_must_be_skills_name(package: dict, agent: dict, limits: dict, folder: str) -> None:
     declarative = bmp.build_agent(package, agent, limits)

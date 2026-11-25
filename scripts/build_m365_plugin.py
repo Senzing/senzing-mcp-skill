@@ -45,10 +45,16 @@ WHITE = b"\xff\xff\xff"
 
 
 def lookup(document: dict, dotted: str):
-    """Return the value at a dotted path such as "name.short" or "items.0.id"."""
+    """Return the value at a dotted path such as "name.short" or "items.0.id", or "" if it is missing."""
     value = document
     for part in dotted.split("."):
-        value = value[int(part)] if isinstance(value, list) else value.get(part, "")
+        match value:
+            case list() if int(part) < len(value):
+                value = value[int(part)]
+            case dict() if part in value:
+                value = value[part]
+            case _:
+                return ""
     return value
 
 
