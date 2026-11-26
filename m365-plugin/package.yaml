@@ -12,7 +12,7 @@ skill_dir: senzing-entity-resolution
 # The app version (manifest.json version, MAJOR.MINOR.PATCH). It is separate
 # from the skill's metadata.version: Teams and Partner Center need a higher
 # version for every package update, so bump it whenever the package changes.
-app_version: 1.47.6
+app_version: 1.47.10
 
 # The ZIP is <package_name>-<app_version>.zip.
 package_name: senzing-m365-plugin
@@ -29,7 +29,7 @@ developer:
 
 name:
   short: Senzing
-  full: Senzing entity resolution for Microsoft Copilot
+  full: Senzing
 
 accent_color: "#F57826"
 
@@ -53,15 +53,42 @@ description:
   # Paragraphs, joined with blank lines. {name} placeholders are filled from
   # the links block.
   full:
+    - "Entity resolution in Microsoft Copilot: answers, data mapping and SDK code, grounded in official sources."
     - >-
-      SENZING® entity resolution help, grounded in official sources, inside
-      Microsoft Copilot. It answers questions about the Senzing SDK with
-      source links, maps your source data to the Senzing Entity Specification,
-      generates Senzing SDK code with source attribution, explains Senzing
-      errors, guides SDK installation and provides sample data. The hosted
-      Senzing MCP server supplies the knowledge: it never sees your records and
-      never connects to a live Senzing instance. Entity resolution itself runs
-      in your own environment with your own Senzing SDK.
+      SENZING® entity resolution finds, deduplicates, links and resolves person
+      and organization records within and across data sources, building an
+      identity-resolved graph with no training or tuning. The Senzing SDK is
+      used for master data management (MDM), customer 360, fraud detection,
+      compliance/know your customer (KYC), sanctions and exclusion screening,
+      supply chain/know your business (KYB) and identity intelligence.
+    - |-
+      How it works: three actors, and only your own environment sees your records.
+      - The Senzing MCP server (mcp.senzing.com) supplies the knowledge: entity specification, SDK signatures, official install and mapping procedures, error catalog. It sees the questions Microsoft Copilot asks it, never your records.
+      - Microsoft Copilot answers from that grounding and shows the official Senzing SDK code the tools return.
+      - Your Senzing SDK resolves the records, in your own environment.
+    - |-
+      What it does:
+      - Answers Senzing questions (attributes, SDK signatures, configuration, architecture, deployment) grounded with source links, never from training data
+      - Maps your source data to the Senzing Entity Specification
+      - Shows Senzing SDK code (Python, Java, C# and more) from official examples, with source attribution
+      - Explains Senzing errors and how to fix them
+      - Guides Senzing SDK installation with the official platform-specific steps
+      - Provides sample data to see entity resolution work
+    - |-
+      What to expect:
+      - Grounded, not guessed: Senzing facts and SDK code come from official Senzing sources, not the model's memory.
+      - Your data stays private: entity resolution runs in your own environment with your own Senzing SDK; records are never sent to Senzing.
+      - No fake results: it never invents match scores or merges.
+    - >-
+      Data: the app calls one remote service, the hosted Senzing MCP server,
+      for Senzing knowledge. It sends the questions Microsoft Copilot asks and
+      their arguments, which, when you are mapping, include your source field
+      names and mapping choices, and, if you ask for an evaluation license, the
+      name and work email you confirm. What is logged and retained is covered by the
+      Senzing MCP privacy policy.
+    - >-
+      How to use: in Microsoft Copilot, open Agents and choose Senzing, then
+      pick a suggested prompt or ask a Senzing question.
     - >-
       Sign up: no account is needed to use this app. To run entity resolution
       on your own data, get the Senzing SDK at {sign_up}

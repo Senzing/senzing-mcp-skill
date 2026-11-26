@@ -77,6 +77,31 @@ version_pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+$"
 app_id_pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 accent_color_pattern: "^#[0-9A-Fa-f]{6}$"
 
+# Store validation: the app name must not name Microsoft or its products.
+# Each entry matches case-insensitively as whole words, including inside
+# CamelCase or next to digits ("SenzingForTeams", "Office365"). Entries may
+# have several words ("Power BI").
+app_name:
+  fields:
+    - name.short
+    - name.full
+  forbidden_words:
+    - Microsoft
+    - Teams
+    - Copilot
+    - Office
+    - Outlook
+    - Excel
+    - PowerPoint
+    - Word
+    - OneDrive
+    - OneNote
+    - SharePoint
+    - Azure
+    - Windows
+    - Bing
+    - Power BI
+
 # Every mention of term in each manifest field must be part of the full phrase
 # (a field without the term passes).
 every_mention:
