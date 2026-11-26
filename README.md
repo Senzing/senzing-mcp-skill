@@ -125,7 +125,7 @@ questions to those tools:
 | `declarativeAgent.json` | The agent (v1.9): instructions, conversation starters, one action and this skill under `skills/` |
 | `ai-plugin.json` | The action (plugin manifest v2.4): one function per MCP tool, run by the anonymous remote MCP server `https://mcp.senzing.com/mcp` |
 | `tools/senzing-tools.json` | The connector's MCP tool description: every tool from the live server's `tools/list` |
-| `tools/senzing-agent-tools.json` | The agent action's tool description: the same tools minus `excluded_tools` |
+| `tools/senzing-agent-tools.json` | The agent action's tool description: the same tools minus `excluded_tools`, with `function_descriptions` applied |
 | `color.png`, `outline.png` | App icons |
 
 The data lives in YAML: app id, version, names, links and descriptions in
@@ -134,10 +134,11 @@ instructions, starters, plugin fields, excluded tools and per-function
 descriptions and capabilities in [`m365-plugin/agent.yaml`](m365-plugin/agent.yaml);
 the schemas and Microsoft store validation rules in
 [`m365-plugin/limits.yaml`](m365-plugin/limits.yaml). The builder enforces
-those rules before writing a ZIP: every mention of Copilot is "Microsoft
-Copilot", the outline icon is white on transparent, the instructions fit in
-8,000 characters, `run_for_functions` lists every included MCP tool, each skill
-folder in the agent is `skills/<name>` (no leading `./`; the manifest's
+those rules before writing a ZIP: the app name names no Microsoft product
+(`app_name`), every mention of Copilot is "Microsoft Copilot", the outline
+icon is white on transparent, the instructions fit in 8,000 characters,
+`run_for_functions` lists every included MCP tool, each skill folder in the
+agent is `skills/<name>` (no leading `./`; the manifest's
 `agentSkills` uses `./skills/<name>`) and holds `SKILL.md`, confirmations
 are `AdaptiveCard` or absent, and every tool named in `agent.yaml` is one the
 server lists. The tests also validate the three JSON files against their

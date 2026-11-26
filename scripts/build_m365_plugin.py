@@ -22,6 +22,7 @@ import re
 import shutil
 import struct
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
 import zlib
@@ -124,9 +125,15 @@ def build_agent(package: dict, agent: dict, limits: dict) -> dict:
 
 
 def agent_tools(agent: dict, tools: dict) -> dict:
-    """Return the tool description without the tools the agent excludes."""
-    excluded = set(agent["excluded_tools"])
-    return {"tools": [tool for tool in tools["tools"] if tool["name"] not in excluded]}
+    """Return the tool description without the tools the agent excludes, with its function_descriptions applied."""
+    excluded, descriptions = set(agent["excluded_tools"]), agent["function_descriptions"]
+    return {
+        "tools": [
+            tool | {"description": descriptions.get(tool["name"], tool["description"])}
+            for tool in tools["tools"]
+            if tool["name"] not in excluded
+        ]
+    }
 
 
 def build_function(agent: dict, tool: dict) -> dict:
@@ -196,15 +203,27 @@ def check_fields(document: dict, rules: dict) -> list[str]:
     return problems
 
 
+def name_words(text: str) -> str:
+    """Return text as space-separated lowercase words, splitting CamelCase and letter-digit runs."""
+    text = unicodedata.normalize("NFKC", text)
+    text = re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|(?<=[A-Za-z])(?=[0-9])|(?<=[0-9])(?=[A-Za-z])", " ", text)
+    return " ".join(re.findall(r"[a-z0-9]+", text.casefold()))
+
+
 def check_app_name(manifest: dict, limits: dict) -> list[str]:
-    """The app name fields must not contain a forbidden word (Microsoft product names)."""
+    """The app name fields must not contain a forbidden word or phrase (Microsoft product names)."""
     rule = limits["app_name"]
+    forbidden = rule["forbidden_words"]
+    if not all(isinstance(word, str) and name_words(word) for word in forbidden):
+        return ["limits app_name.forbidden_words: every entry must be a non-empty string"]
     problems = []
     for field in rule["fields"]:
-        words = set(re.findall(r"[a-z0-9]+", lookup(manifest, field).lower()))
-        problems += [
-            f"{field}: the app name must not contain {word!r}" for word in rule["forbidden_words"] if word.lower() in words
-        ]
+        name = lookup(manifest, field)
+        if not isinstance(name, str) or not name:
+            problems.append(f"{field}: the app name must be a non-empty string")
+            continue
+        words = f" {name_words(name)} "
+        problems += [f"{field}: the app name must not contain {word!r}" for word in forbidden if f" {name_words(word)} " in words]
     return problems
 
 

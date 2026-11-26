@@ -178,6 +178,10 @@ def test_instructions_route_to_tools(built: Path) -> None:
     instructions = member(built, "agent")["instructions"]
     assert len(instructions) <= 8000
     assert "get_capabilities is only for questions that no tool listed above fits" in instructions
+    assert "call sdk_guide with the topic" in instructions
+    assert "Do not use generate_scaffold for code" in instructions
+    assert "workspace_dir" in instructions
+    assert "Never ask the user to paste personal data" in instructions
     assert "CORD" not in instructions and "truth set" not in instructions
 
 
@@ -187,6 +191,9 @@ def test_plugin_functions_match_tool_file(built: Path, package: dict, agent: dic
     names = [tool["name"] for tool in tools]
     assert names and [function["name"] for function in plugin["functions"]] == names
     assert set(agent["excluded_tools"]).isdisjoint(names)
+    descriptions = {tool["name"]: tool["description"] for tool in tools}
+    assert {function["name"]: function["description"] for function in plugin["functions"]} == descriptions
+    assert descriptions["get_capabilities"] == agent["function_descriptions"]["get_capabilities"]
     runtime = plugin["runtimes"][0]
     assert runtime["type"] == "RemoteMCPServer" and runtime["auth"] == {"type": "None"}
     assert runtime["run_for_functions"] == names
@@ -390,24 +397,47 @@ def test_plugin_urls_must_be_https(package: dict, agent: dict, limits: dict, eve
 
 
 @pytest.mark.parametrize(
-    ("name", "word"),
+    ("field", "name", "words"),
     [
-        ("Senzing for Microsoft Teams", "Microsoft"),
-        ("Senzing entity resolution for Copilot", "Copilot"),
-        ("Senzing in teams", "Teams"),
+        ("full", "Senzing for Microsoft Teams", ["Microsoft", "Teams"]),
+        ("full", "Senzing entity resolution for Copilot", ["Copilot"]),
+        ("short", "Senzing in teams", ["Teams"]),
+        ("short", "SenzingForTeams", ["Teams"]),
+        ("full", "Senzing for Office365", ["Office"]),
+        ("full", "Senzing MSTeams", ["Teams"]),
+        ("full", "Senzing for SharePoint and Power BI", ["SharePoint", "Power BI"]),
+        ("full", "Senzing for \uff2d\uff49\uff43\uff52\uff4f\uff53\uff4f\uff46\uff54", ["Microsoft"]),
     ],
+    ids=["two-words", "copilot", "lowercase-short", "camel-case", "digits", "acronym-prefix", "product-names", "fullwidth"],
 )
-def test_app_name_must_not_name_microsoft_products(package: dict, agent: dict, limits: dict, name: str, word: str) -> None:
+def test_app_name_must_not_name_microsoft_products(
+    package: dict, agent: dict, limits: dict, field: str, name: str, words: list[str]
+) -> None:
     manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
     assert bmp.check_app_name(manifest, limits) == []
-    manifest["name"]["full"] = name
-    assert f"name.full: the app name must not contain {word!r}" in bmp.check_app_name(manifest, limits)
+    manifest["name"][field] = name
+    assert bmp.check_app_name(manifest, limits) == [f"name.{field}: the app name must not contain {word!r}" for word in words]
 
 
 def test_app_name_allows_words_containing_a_product_name(package: dict, agent: dict, limits: dict) -> None:
     manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
-    manifest["name"]["full"] = "Senzing steamteams outlookish"
+    manifest["name"]["full"] = "Senzing steamteams outlookish Wordsmith"
     assert bmp.check_app_name(manifest, limits) == []
+
+
+@pytest.mark.parametrize("value", ["", {"default": "Senzing"}, None])
+def test_app_name_must_be_a_string(package: dict, agent: dict, limits: dict, value: object) -> None:
+    manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
+    manifest["name"]["short"] = value
+    assert bmp.check_app_name(manifest, limits) == ["name.short: the app name must be a non-empty string"]
+
+
+def test_app_name_rule_rejects_a_non_string_entry(package: dict, agent: dict, limits: dict) -> None:
+    manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
+    rule = limits["app_name"] | {"forbidden_words": ["Microsoft", False]}
+    assert bmp.check_app_name(manifest, limits | {"app_name": rule}) == [
+        "limits app_name.forbidden_words: every entry must be a non-empty string"
+    ]
 
 
 def test_tool_names_must_exist(agent: dict, limits: dict, every_tool: dict) -> None:
