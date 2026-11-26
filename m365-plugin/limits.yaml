@@ -79,6 +79,14 @@ accent_color_pattern: "^#[0-9A-Fa-f]{6}$"
 
 # Every mention of term in each manifest field must be part of the full phrase
 # (a field without the term passes).
+# Store validation: the app name must not name Microsoft or its products
+# (case-insensitive whole words).
+app_name:
+  fields:
+    - name.short
+    - name.full
+  forbidden_words: [Microsoft, Teams, Copilot, Office, Outlook]
+
 every_mention:
   term: Copilot
   phrase: Microsoft Copilot

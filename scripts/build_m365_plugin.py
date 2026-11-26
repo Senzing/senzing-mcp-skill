@@ -196,6 +196,18 @@ def check_fields(document: dict, rules: dict) -> list[str]:
     return problems
 
 
+def check_app_name(manifest: dict, limits: dict) -> list[str]:
+    """The app name fields must not contain a forbidden word (Microsoft product names)."""
+    rule = limits["app_name"]
+    problems = []
+    for field in rule["fields"]:
+        words = set(re.findall(r"[a-z0-9]+", lookup(manifest, field).lower()))
+        problems += [
+            f"{field}: the app name must not contain {word!r}" for word in rule["forbidden_words"] if word.lower() in words
+        ]
+    return problems
+
+
 def check_mentions(manifest: dict, limits: dict) -> list[str]:
     """Every mention of the term must be part of the full phrase (no mention is fine)."""
     rule = limits["every_mention"]
@@ -338,6 +350,7 @@ def validate(manifest: dict, declarative: dict, package: dict, limits: dict, rep
         check_identity(manifest, limits)
         + check_skill(frontmatter, repo_root / package["skill_dir"])
         + check_fields(manifest, limits["manifest"])
+        + check_app_name(manifest, limits)
         + check_mentions(manifest, limits)
         + check_icons(package, limits, repo_root)
         + check_fields(declarative, limits["agent"])

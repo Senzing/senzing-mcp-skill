@@ -389,6 +389,27 @@ def test_plugin_urls_must_be_https(package: dict, agent: dict, limits: dict, eve
     assert plugin_problems(agent, limits, every_tool) == ["ai-plugin.json: privacy_policy_url must be an https:// URL"]
 
 
+@pytest.mark.parametrize(
+    ("name", "word"),
+    [
+        ("Senzing for Microsoft Teams", "Microsoft"),
+        ("Senzing entity resolution for Copilot", "Copilot"),
+        ("Senzing in teams", "Teams"),
+    ],
+)
+def test_app_name_must_not_name_microsoft_products(package: dict, agent: dict, limits: dict, name: str, word: str) -> None:
+    manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
+    assert bmp.check_app_name(manifest, limits) == []
+    manifest["name"]["full"] = name
+    assert f"name.full: the app name must not contain {word!r}" in bmp.check_app_name(manifest, limits)
+
+
+def test_app_name_allows_words_containing_a_product_name(package: dict, agent: dict, limits: dict) -> None:
+    manifest = bmp.build_manifest(package, agent, limits, package["app_version"])
+    manifest["name"]["full"] = "Senzing steamteams outlookish"
+    assert bmp.check_app_name(manifest, limits) == []
+
+
 def test_tool_names_must_exist(agent: dict, limits: dict, every_tool: dict) -> None:
     agent["excluded_tools"] = ["analyze_record", "no_such_tool"]
     agent["function_descriptions"]["analyze_record"] = "excluded, so not a function"
